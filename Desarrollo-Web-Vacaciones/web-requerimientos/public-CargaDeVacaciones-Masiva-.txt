@@ -1,0 +1,90 @@
+' BEGIN - Nombre de columnas en BD 
+'Fecha Efectiva	Convenio	 Cat.Convenio	Antigüedad	Básico	Min. Garantía	Conformado	Convenio1	Convenio2	Convenio3	Convenio4
+'CB_VAC'
+COD_MF, PERIODO, COD_EMP, DIAS_ARRASTRE, DIAS_CALCULADOS, DIAS_TOMADOS, MAX_FRAG, LAST_USR, LAST_HOST
+'CB_VAC_SOL'
+COD_MF, PERIODO, COD_EMP, FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC, LAST_USR, LAST_HOST
+'MAEFUNC_TBL'
+M.CBHR_DIAS_ACORD
+M.GRADO, M.FEC_ANTIG
+'CB_VAC_SOL: COD_MF, PERIODO, COD_EMP, FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC, LAST_USR, LAST_HOST'
+db_vsCOD_MF			= "COD_MF"
+db_vsPERIODO		= "PERIODO"
+db_vsCOD_EMP		= "COD_EMP"
+db_vsFEC_INI		= "FEC_INI"
+db_vsFEC_FIN		= "FEC_FIN"
+db_vsDIAS			= "DIAS"
+db_vsFEC_PEDIDO		= "FEC_PEDIDO"
+db_vsPLUS_VAC		= "PLUS_VAC"
+db_vsADE_VAC		= "ADE_VAC"
+db_vsMES			= "MES"
+db_vsANIO			= "ANIO"
+db_vsAPROB_VAC		= "APROB_VAC"
+db_vsLAST_USR		= "LAST_USR"
+db_vsLAST_HOST		= "LAST_HOST"
+
+	nomCol_FechaEfectiva = "FECHA_EFECTIVA"
+	nomCol_Convenio = "QS_CONVENIO"
+	nomCol_CatConvenio = "CBHR_CAT_CONVE"
+	nomCol_Antiguedad = "CBHR_ANTIG"
+	nomCol_Basico = "CBHR_BASICO"
+	nomCol_MinGarantia = "CBHR_MIN_GARANT"
+	nomCol_Conformado = "CBHR_CONFORMADO"
+	nomCol_Convenio1 = "CBHR_CONVENIO1"
+	nomCol_Convenio2 = "CBHR_CONVENIO2"
+	nomCol_Convenio3 = "CBHR_CONVENIO3"
+	nomCol_Convenio4 = "CBHR_CONVENIO4"
+' END - Nombre de columnas 
+
+Días Arrastre
+Fragmentación Max
+Días Calculados
+Días Tomados
+Días Totales
+Días Restantes
+'Fec Ped	Fec Ini	Dias	Fec Fin	Plus Vac	Adelanto	Mes	Año	Aprobado	Acción
+fechaPedido	Días	fechaInicio 	fechaFin 	plusVacac	adelanto 	mes año 	aprobado 	acción
+fechaPedido	cantDias	fechaInicio 	fechaFin 	plusVacac	adelanto 	mes anio 	aprobado 	acción
+
+nroLegajo	fechaPeriodo	codEmpresa	fechaInicio 	fechaFin	cantDias	fechaPedido 	chkPlusVac	chkAdelanto 	mes	anio 	aprobado	lastUsr lastHost
+
+
+public sub leerDatosEscalasSalariales
+	'Se encarga de leer los datos existentes en la tabla BXCB_CATLN_TBL'
+	query = "SELECT * FROM BXCB_CATLN_TBL ORDER BY FECHA_EFECTIVA DESC"
+    Set r1 = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+    while not r1.EOF
+    
+	    col_FechaEfectiva = r1.rdoColumns(nomCol_FechaEfectiva).Value 
+		col_Convenio = r1.rdoColumns(nomCol_Convenio).Value  
+		col_CatConvenio = r1.rdoColumns(nomCol_CatConvenio).Value  
+		col_Antiguedad = r1.rdoColumns(nomCol_Antiguedad).Value  
+		col_Basico = r1.rdoColumns(nomCol_Basico).Value 
+		col_MinGarantia = r1.rdoColumns(nomCol_MinGarantia).Value  
+		col_Conformado = r1.rdoColumns(nomCol_Conformado).Value  
+		col_Convenio1 = r1.rdoColumns(nomCol_Convenio1).Value  
+		col_Convenio2 = r1.rdoColumns(nomCol_Convenio2).Value  
+		col_Convenio3 = r1.rdoColumns(nomCol_Convenio3).Value  
+		col_Convenio4 = r1.rdoColumns(nomCol_Convenio4).Value 
+	    '-- Ingresa en la grilla de Visualización
+	    obj.controles("grdTablaEscalaSalarial").AgregarFila = col_FechaEfectiva & vbtab &  col_Convenio &_
+					vbtab &  col_CatConvenio & vbtab &  col_Antiguedad & vbtab &  col_Basico & vbtab &  col_MinGarantia &_
+					vbtab &  col_Conformado & vbtab &  col_Convenio1 & vbtab &  col_Convenio2 & vbtab &  col_Convenio3  &_
+					vbtab &  col_Convenio4   
+					
+		r1.MoveNext
+	wend
+end sub
+
+'Validar que una cadena tenga solo letras'   
+
+'public sub contieneSoloLetras(ByVal texto ) 
+'	Dim pattern As Regex = New Regex("[^a-zA-Z]")
+'	Return Not pattern.IsMatch(texto)
+'end sub           
+
+'public sub validarTexto(ByVal texto )
+'    If texto Like "*[!A-Za-z]*" Then
+'    	Return false
+'	End If
+'end sub

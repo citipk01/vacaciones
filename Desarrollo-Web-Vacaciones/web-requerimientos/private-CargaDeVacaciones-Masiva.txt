@@ -1,0 +1,54 @@
+'-----------------------------------------------------
+Dim col_Antiguedad
+Dim col_Basico
+Dim col_MinGarantia
+Dim col_Conformado
+Dim col_Convenio1
+Dim col_Convenio2
+Dim col_Convenio3
+Dim col_Convenio4
+
+
+FOR i=0 TO obj.controles("grdVacaciones").filas - 1
+	If i = 0 then
+		col_FechaEfectiva = obj.controles("grdVacaciones").ValorCelda(0,i)
+		Set r1 = obj.Conexion.OpenResultset("SELECT COUNT(FECHA_EFECTIVA) FROM BXCB_CATLN_TBL WHERE FECHA_EFECTIVA = TO_DATE('" & col_FechaEfectiva & "', 'DD/MM/YYYY');" , rdOpenForwardOnly)
+		'inputbox "","","SELECT COUNT(FECHA_EFECTIVA) FROM BXCB_CATLN_TBL WHERE FECHA_EFECTIVA = TO_DATE('" & col_FechaEfectiva & "', 'DD/MM/YYYY');"
+		IF r1(0) > 0 then 
+			answer = msgBox("Ya existen registros con la fecha "& col_FechaEfectiva &" ¿Desea sobreescribirlos?",vbExclamation + vbYesNo)
+			if  answer = vbYes Then
+				msgBox "Se reemplazarán los registros"
+				obj.conexion.execute("DELETE FROM BXCB_CATLN_TBL WHERE FECHA_EFECTIVA = TO_DATE('" & col_FechaEfectiva & "', 'DD/MM/YYYY');")
+			else
+				msgBox "Los registros previos no serán modificados"
+				exit sub
+			end if
+		end if
+		r1.Close
+	End if
+	
+	
+	col_FechaEfectiva 	= obj.controles("grdVacaciones").ValorCelda(0 ,i)
+	col_Convenio 	  	= obj.controles("grdVacaciones").ValorCelda(1 ,i)
+	col_CatConvenio   	= obj.controles("grdVacaciones").ValorCelda(2 ,i)
+	col_Antiguedad    	= obj.controles("grdVacaciones").ValorCelda(3 ,i)
+	col_Basico		 	= obj.controles("grdVacaciones").ValorCelda(4 ,i)
+	col_MinGarantia		= obj.controles("grdVacaciones").ValorCelda(5 ,i)
+	col_Conformado		= obj.controles("grdVacaciones").ValorCelda(6 ,i)
+	col_Convenio1		= obj.controles("grdVacaciones").ValorCelda(7 ,i)
+	col_Convenio2		= obj.controles("grdVacaciones").ValorCelda(8 ,i)
+	col_Convenio3 		= obj.controles("grdVacaciones").ValorCelda(9 ,i)
+	col_Convenio4		= obj.controles("grdVacaciones").ValorCelda(10,i)
+
+
+
+
+	'Query: INTO BXCB_CATLN_TBL VALUES('QS_CONVENIO', '01/05/2018', '169', 99, 84312.92, 0, 0, 0, 0, 0, 0)
+	insertSql = "INSERT INTO BXCB_CATLN_TBL(FECHA_EFECTIVA, QS_CONVENIO, CBHR_CAT_CONVE, CBHR_ANTIG, CBHR_BASICO, CBHR_MIN_GARANT, CBHR_CONFORMADO, CBHR_CONVENIO1, CBHR_CONVENIO2, CBHR_CONVENIO3, CBHR_CONVENIO4) " & _
+				"VALUES ('" & col_FechaEfectiva & "', '" & col_Convenio & "', '" & col_CatConvenio & "', " & col_Antiguedad & ", " & col_Basico & ", " & col_MinGarantia & ", " & col_Conformado & ", " & col_Convenio1 & ", " & col_Convenio2 & ", " & col_Convenio3 & ", " & col_Convenio4 & ");"
+	'inputbox "","",insertSql
+	obj.conexion.execute(insertSql)
+next
+
+msgBox "Proceso ejecutado correctamente. Se insertaron "& i &" filas en la Base de Datos"
+leerDatosEscalasSalariales

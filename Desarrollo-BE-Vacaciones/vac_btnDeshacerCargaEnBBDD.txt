@@ -1,0 +1,75 @@
+
+''public Sub  btnDB_DeshacerCambiosGrilla_ACTION
+	
+	''nombreGrilla 	= "grdPreviExcel_Vacaciones"
+	const formatoFechaDB = "DD/MM/YYYY"
+	huboErrores_TransaccionDB = false
+	cantFilasGrilla = obj.controles(nombreGrilla).filas
+
+
+	FOR i=0 TO (cantFilasGrilla - 1)
+
+		'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'
+		'1) Se recuperan los valores correspondientes a cada columna'
+			col_COD_MF		= obj.controles(nombreGrilla).ValorCelda("col_COD_MF", i)		
+			col_PERIODO		= obj.controles(nombreGrilla).ValorCelda("col_PERIODO", i)		
+			col_COD_EMP		= obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i)		
+			col_FEC_INI		= obj.controles(nombreGrilla).ValorCelda("col_FEC_INI", i)		
+			col_FEC_FIN		= obj.controles(nombreGrilla).ValorCelda("col_FEC_FIN", i)		
+			col_CantDias	= obj.controles(nombreGrilla).ValorCelda("col_CantDias", i)			
+
+		'2) Se realizan las conversiones de fechas'
+			col_PERIODO		= Format(CStr(col_PERIODO)		, formatoFechaDB)
+			col_FEC_INI		= Format(CStr(col_FEC_INI)		, formatoFechaDB)
+			col_FEC_FIN		= Format(CStr(col_FEC_FIN)		, formatoFechaDB)
+
+			''
+			''if quedaronDiasTomadosEnNegativo(col_COD_MF, col_PERIODO) then 
+			''	mensaje = "Existen registros con días tomados en negativo. Se cancela operación. Revisar empleado: " & col_COD_MF & "- Periodo: " & col_PERIODO
+			''	msg_onWindow	mensaje, msg_Error
+			''	exit sub
+			''end if 
+
+		'3) Se prepara y ejecuta la transacción con la BBDD'
+			sqlDelete = "DELETE FROM CB_VAC_SOL "
+			sqlDelete = sqlDelete &_ 
+					" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+					" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+					" AND COD_EMP = " 			& col_COD_EMP &_
+					" AND FEC_INI = TO_DATE('" 	& col_FEC_INI & "', '"&formatoFechaDB&"')" 	&_
+					" AND LAST_HOST LIKE 'Cargado el%'"
+				''	" AND FEC_FIN = TO_DATE('" 	& col_FEC_FIN & "', '"&formatoFechaDB&"')" 	&_
+
+			''''msg_onWindow sqlDelete, msg_Input 
+			obj.conexion.execute(sqlDelete)
+
+
+			''Actualizar Saldo en CB_VAC
+			sql = 	" UPDATE CB_VAC  " &_ 
+			" SET DIAS_TOMADOS = (DIAS_TOMADOS - " & col_CantDias &")" &_ 
+			" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+			" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	
+			''''msg_onWindow sql, msg_Input 
+			obj.conexion.execute(sql)
+			''huboErrores_TransaccionDB = true
+		'4) Se informan los resultados de la transacción por fila'
+		msgObservacion = "OK: Se borró de la BBDD con éxito"
+		obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+	NEXT
+
+	'5) Se informan los resultados de la transacción (general)'
+	''mensaje = " de " & cantFilasGrilla " filas"
+	nombreControl_DeshacerCambios = "btnDB_DeshacerCambiosGrilla"
+
+	if not huboErrores_TransaccionDB then
+			obj.controles("btnGuardarEnBD").habilitado = true
+			obj.controles(nombreControl_DeshacerCambios).habilitado	= false
+			obj.controles(nombreControl_DeshacerCambios).visible	= false
+			mensaje = "Los cambios fueron revertidos con éxito"
+			msg_onFormControl	mensaje, msg_Info
+		else
+			mensaje = "Ocurrieron errores al tratar de revertir los cambios"
+			msg_onFormControl	mensaje, msg_Error
+	end if
+''End Sub
+

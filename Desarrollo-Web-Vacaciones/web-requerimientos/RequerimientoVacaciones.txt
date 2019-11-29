@@ -1,0 +1,63 @@
+CARGA MASIVA DE VACACIONES
+
+[2019-11-07 14:15 je95744]
+ - Se puede armar un desplegable para elegir que acción realizar con los datos cargaados por el excel (Cargar, Actualizar, Borrar, Mixto: Requerirá una nueva columna que indique el tipo de acción)
+ - Ver cómo se generan registros de CB_VAC. Estos sirven como contenedores de VAC_SOL relacionados por el COD_MF y PERIODO (Relación exacta)
+ - Validar existencia de cabecera vacaciones (CB_VAC= COD_MF-PERIODO) 
+ 
+[2019-11-05 14:23 je95744]
+[2019-10-22 17:25 je95744]
+1) Los ingresos del usuario deben ser los CB_VAC_SOL
+	COD_MF	PERIODO	COD_EMP	FEC_INI	FEC_FIN	FEC_PEDIDO	PLUS_VAC	ADE_VAC	MES	ANIO	APROB_VAC
+2.1) Validar ordenamiento de filas por legajo, periodo
+2.2) Valida formato de datos excel
+2.2) Valida relación de datos cargados con la BBDD
+2) Calcula las columnas eliminadas DIAS LAST_USR	LAST_HOST, con la diferencia de fechaInicio, fechaFin y usuario buxis("obj.Usuario")
+3) Busca en la tabla maestra de vacaciones la cantidad de días correspondientes (CB_VAC)
+4) Realizar carga en grilla para poder calcular los registros ingresados para cada empleado
+5) llamar al método de validación para comparar los días disponibles con los ingresados en excel(realizar sumatoria) y mostrar las validaciones en la grilla de previsualización
+6) Realizar carga en la tabla de VAC_SOL
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------
+* Hacer una carga masiva de lo que hoy se hace por el portal por cada empleado
+* La tablas que deberán ser cargadas son las de CB_VAC y CB_VAC_SOL
+* Guardar en el "last_user" el usuario de Buxis "BX..." par aidentificar cargas por bandeja	(En buxis se llama "obj.Usuario")
+* Agregar Validaciones web:	
+	- Fragmentación
+	- SaldoPeriodoActual
+	- SaldoPeriodoAñoAnterior: Verificar que no queden días disponibles de año anterior al actual
+	- Superposición de fechaFin/fechaInicio entre fechas para el miso periodo (Compara con filas anteriores-loop)
+
+- Seleccionar el último periodo al cargar
+
+
+
+
++ Agregar pestaña de reportes ()
++ Juntar con la generación del control de vacaciones
++ Debería permitir reordenar las filas de la grilla del mantenimiento(Legajo, nombre Apellido)
++ Pintar de rojo las que se pasen de días correspondientes
++ Check para importar (SeleccionarTodas: por defecto vienen todas marcadas)
+
++ Realizar búsqueda por legajo periodo
+
+
+
+Realizar la siguiente query para cargar
+"Referencia del excel utilizado en 2018-10"
+INSERT INTO CB_VAC_SOL(COD_MF, PERIODO, COD_EMP, FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC) VALUES 
+
+COD_MF, PERIODO
+
+
+INSERT INTO CB_VAC_SOL(COD_MF, PERIODO, COD_EMP, FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC) VALUES 	
+	('1010573910',TO_DATE ('31/12/2018','dd/mm/yyyy'),1 ,TO_DATE ('17/12/2018','dd/mm/yyyy')
+	, TO_DATE ('18/12/2018','dd/mm/yyyy'),7 , TO_DATE ('07/12/2018','dd/mm/yyyy'), 'Y', 'N', 12 , 2018 , 'Y');
+
+
+VB6: Lectura Excel
+https://gist.github.com/simply-coded/758e2557ccd1a55b46765d8bb1099ec6

@@ -1,0 +1,126 @@
+INSERT INTO CB_VAC_SOL(COD_MF, PERIODO, COD_EMP, FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC,LAST_USR, LAST_HOST)  
+
+VALUES ('120'
+	,TO_DATE('2019/11/01'
+	,'DD/MM/YYYY')
+	,21
+	,TO_DATE('2019/11/05'
+	,'DD/MM/YYYY')
+	,TO_DATE('2019/11/10'
+	,'DD/MM/YYYY')
+	,
+	,TO_DATE('25/08/2019'
+	,'DD/MM/YYYY')
+	,0
+	,0
+	,11
+	,2019
+	,-1
+	,PORTAL
+	,Cargado el 2019-11-07
+
+
+
+VALUES ('120'
+	,TO_DATE('2019/11/01'
+	,'DD/MM/YYYY')
+	,21
+	,TO_DATE('2019/11/05'
+	,'DD/MM/YYYY')
+	,TO_DATE('2019/11/10'
+	,'DD/MM/YYYY')
+	,
+	,TO_DATE('25/08/2019'
+	,'DD/MM/YYYY')
+	,False
+	,False
+	,11
+	,2019
+	,True
+	,'PORTAL'
+	,'Cargado el 2019-11-07 11:02'
+
+
+' BEGIN - Nombre de columnas en BD 
+'
+	nomCol_COD_MF = "COD_MF"
+	nomCol_PERIODO = "PERIODO"
+	nomCol_COD_EMP = "COD_EMP"
+	nomCol_FEC_INI = "FEC_INI"
+	nomCol_FEC_FIN = "FEC_FIN"
+	nomCol_FEC_PEDIDO = "FEC_PEDIDO"
+	nomCol_PLUS_VAC = "PLUS_VAC"
+	nomCol_ADE_VAC = "ADE_VAC"
+	nomCol_MES = "MES"
+	nomCol_ANIO = "ANIO"
+	nomCol_APROB_VAC = "APROB_VAC"
+
+	dim db_COD_MF 
+	dim db_PERIODO 
+	dim db_COD_EMP 
+	dim db_FEC_INI 
+	dim db_FEC_FIN 
+	dim db_FEC_PEDIDO 
+	dim db_PLUS_VAC 
+	dim db_ADE_VAC 
+	dim db_MES 
+	dim db_ANIO 
+	dim db_APROB_VAC 
+' END - Nombre de columnas 
+
+public sub dbSelectAll_VacacionesSol
+	'Se encarga de leer los datos existentes en la tabla CB_VAC_SOL'
+	query = "SELECT * FROM CB_VAC_SOL ORDER BY COD_MF DESC"
+    Set r1 = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+    while not r1.EOF
+
+    	r1.rdoColumns
+	    db_COD_MF = r1.rdoColumns(nomCol_COD_MF).Value
+		db_PERIODO = r1.rdoColumns(nomCol_PERIODO).Value
+		db_COD_EMP = r1.rdoColumns(nomCol_COD_EMP).Value
+		db_FEC_INI = r1.rdoColumns(nomCol_FEC_INI).Value
+		db_FEC_FIN = r1.rdoColumns(nomCol_FEC_FIN).Value
+		db_FEC_PEDIDO = r1.rdoColumns(nomCol_FEC_PEDIDO).Value
+		db_PLUS_VAC = r1.rdoColumns(nomCol_PLUS_VAC).Value
+		db_ADE_VAC = r1.rdoColumns(nomCol_ADE_VAC).Value
+		db_MES = r1.rdoColumns(nomCol_MES).Value
+		db_ANIO = r1.rdoColumns(nomCol_ANIO).Value
+		db_APROB_VAC = r1.rdoColumns(nomCol_APROB_VAC).Value
+
+	    '-- Ingresa en la grilla de Visualización
+	    obj.controles("grdTablaVacacionesSol").AgregarFila = 	db_COD_MF &_
+														vbTab & db_PERIODO &_
+														vbTab & db_COD_EMP &_
+														vbTab & db_FEC_INI &_
+														vbTab & db_FEC_FIN &_
+														vbTab & db_FEC_PEDIDO &_
+														vbTab & db_PLUS_VAC &_
+														vbTab & db_ADE_VAC &_
+														vbTab & db_MES &_
+														vbTab & db_ANIO &_
+														vbTab & db_APROB_VAC 
+					
+		r1.MoveNext
+	wend
+end sub
+
+'Validar que una cadena tenga solo letras'   
+
+'public sub contieneSoloLetras(ByVal texto ) 
+'	Dim pattern As Regex = New Regex("[^a-zA-Z]")
+'	Return Not pattern.IsMatch(texto)
+'end sub           
+
+'public sub validarTexto(ByVal texto )
+'    If texto Like "*[!A-Za-z]*" Then
+'    	Return false
+'	End If
+'end sub
+
+
+sub mostrarMensaje (mensaje) 
+	obj.controles("lblEstadoImportacion_info").TEXTO = 		mensaje
+	obj.controles("lblEstadoImportacion_info").ColorTexto =	RGB (0, 153,  77)
+	''msgBox mensaje, vbExclamation + vbOkOnly, mensajeErrorTitulo
+	exit sub	
+end sub

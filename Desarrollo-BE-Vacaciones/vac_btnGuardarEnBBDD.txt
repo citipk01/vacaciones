@@ -1,0 +1,109 @@
+''public sub  btnDB_GuardarEnBD_ACTION
+
+	''nombreGrilla 	= "grdPreviExcel_Vacaciones"
+	const formatoFechaDB = "DD/MM/YYYY"
+	huboErrores_TransaccionDB = false
+	cantFilasGrilla = obj.controles(nombreGrilla).filas
+
+		mensaje = "Se continuará con el almacenado de los registros cargados en la grilla de previsualización"
+		mensaje = mensaje & vbNewLine & vbNewLine & "Recuerde que puede revertir los cambios"
+		mensaje = mensaje & vbNewLine & vbNewLine & "¿Confirma la acción?"
+	''seConfirmoLaAccion = msgBox(mensaje ,vbExclamation 	+ vbYesNo , "Pregunta BBDD") 'msg_onWindow(mensaje, msg_Question)
+	seConfirmoLaAccion = msg_onWindow(mensaje, msg_Question)
+	nombreControl_DeshacerCambios = "btnDB_DeshacerCambiosGrilla"
+
+	IF NOT seConfirmoLaAccion THEN
+			mensaje = "La acción fue cancelada por el Usuario"
+			msg_onFormControl	mensaje, msg_Info
+			obj.controles(nombreControl_DeshacerCambios).Visible	= false
+			obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+			exit sub		
+	  ELSE
+			FOR i=0 TO (cantFilasGrilla - 1)
+
+				'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'
+				'1) Se recuperan los valores correspondientes a cada columna'
+					col_COD_MF		= obj.controles(nombreGrilla).ValorCelda("col_COD_MF", i)		
+					col_PERIODO		= obj.controles(nombreGrilla).ValorCelda("col_PERIODO", i)		
+					col_COD_EMP		= obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i)		
+					col_FEC_INI		= obj.controles(nombreGrilla).ValorCelda("col_FEC_INI", i)		
+					col_FEC_FIN		= obj.controles(nombreGrilla).ValorCelda("col_FEC_FIN", i)		
+					col_CantDias	= obj.controles(nombreGrilla).ValorCelda("col_CantDias", i)			
+					col_FEC_PEDIDO	= obj.controles(nombreGrilla).ValorCelda("col_FEC_PEDIDO", i)			
+					col_PLUS_VAC	= obj.controles(nombreGrilla).ValorCelda("col_PLUS_VAC", i)			
+					col_ADE_VAC		= obj.controles(nombreGrilla).ValorCelda("col_ADE_VAC", i)		
+					col_MES			= obj.controles(nombreGrilla).ValorCelda("col_MES", i)	
+					col_ANIO		= obj.controles(nombreGrilla).ValorCelda("col_ANIO", i)		
+					col_APROB_VAC	= obj.controles(nombreGrilla).ValorCelda("col_APROB_VAC", i)			
+					LAST_USR		= obj.Usuario
+					LAST_HOST		= "Cargado el " & getDateAsString
+
+				'2) Se realizan las asignaciones de valores booleanos'
+					col_PLUS_VAC	= getYesNoFromBool(getBooleanValue(col_PLUS_VAC))
+					col_ADE_VAC		= getYesNoFromBool(getBooleanValue(col_ADE_VAC))
+					col_APROB_VAC	= getYesNoFromBool(getBooleanValue(col_APROB_VAC))
+
+				'3) Se realizan las conversiones de fechas'
+					col_PERIODO		= Format(CStr(col_PERIODO)		, formatoFechaDB)
+					col_FEC_INI		= Format(CStr(col_FEC_INI)		, formatoFechaDB)
+					col_FEC_FIN		= Format(CStr(col_FEC_FIN)		, formatoFechaDB)
+					col_FEC_PEDIDO	= Format(CStr(col_FEC_PEDIDO)	, formatoFechaDB)	
+
+				'4) Se prepara y ejecuta la transacción con la BBDD'
+					insertSql = "INSERT INTO CB_VAC_SOL(COD_MF, PERIODO, COD_EMP, FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC,LAST_USR, LAST_HOST) "
+					insertSql = insertSql & " VALUES ('" & col_COD_MF & "'" 	&_
+							", TO_DATE('" & col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+							", " & col_COD_EMP &_
+							", TO_DATE('" & col_FEC_INI & "', '"&formatoFechaDB&"')" 	&_
+							", TO_DATE('" & col_FEC_FIN & "', '"&formatoFechaDB&"')" 	&_
+							", " & col_CantDias &_
+							", TO_DATE('" & col_FEC_PEDIDO & "', '"&formatoFechaDB&"')" 	&_
+							", '" & col_PLUS_VAC	& "'" &_
+							", '" & col_ADE_VAC		& "'" &_
+							", '" & col_MES			& "'" &_
+							", '" & col_ANIO		& "'" &_
+							", '" & col_APROB_VAC	& "'" &_
+							", '" & LAST_USR		& "'" &_
+							", '" & LAST_HOST		& "'" &_
+							" ) " 
+
+					''msg_onWindow insertSql, msg_Input 
+					obj.conexion.execute(insertSql)
+
+
+					''Actualizar Saldo en CB_VAC
+					sql = 	" UPDATE CB_VAC  " &_ 
+					" SET DIAS_TOMADOS = (DIAS_TOMADOS + " & col_CantDias &")" &_ 
+					" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+					" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	
+					''''msg_onWindow sql, msg_Input 
+					obj.conexion.execute(sql)
+
+					
+					''huboErrores_TransaccionDB = true
+				'5) Se informan los resultados de la transacción'
+				msgObservacion = "OK: Guardado en BBDD con éxito"
+				obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+			NEXT
+
+
+			
+			if not huboErrores_TransaccionDB and seConfirmoLaAccion then
+					obj.controles(nombreControl_DeshacerCambios).Visible	= true
+					obj.controles(nombreControl_DeshacerCambios).Habilitado	= true
+					obj.controles("btnGuardarEnBD").habilitado = false
+
+					mensaje = "Los datos cargados en la grilla fueron registrados con éxito"
+					msg_onFormControl	mensaje, msg_OK
+				else
+					obj.controles(nombreControl_DeshacerCambios).Visible	= false
+					obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+
+					mensaje = "Ocurrió un error al registrar los cambios en la Base de Datos"
+					msg_onFormControl	mensaje, msg_Error
+			end if
+
+	END IF
+
+
+''End Sub

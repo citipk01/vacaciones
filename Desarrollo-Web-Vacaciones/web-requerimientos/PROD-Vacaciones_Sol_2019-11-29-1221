@@ -1,0 +1,1015 @@
+<SERVICES><GROUP EDATE="01/01/1900" ID="CITI.PORTAL" NAME="Servicios del Portal Citi" GROUP="" UED="19000101" ORD="">
+		<DESCRIPTION></DESCRIPTION>
+		<ACCESSRULES/><PARAMETERS/><GROUP EDATE="01/01/1900" ID="CITI.HRMS_VALIDA" NAME="Validacion de Interfaz HRMS" GROUP="CITI.PORTAL" UED="19000101" ORD="">
+			<DESCRIPTION></DESCRIPTION>
+			<ACCESSRULES/><PARAMETERS/></GROUP><MENU EDATE="01/01/1900" ID="CIT.VAC_SOL" NAME="Solicitud de Vacaciones" GROUP="CITI.PORTAL" UED="19000101" ORD="">
+			<DESCRIPTION></DESCRIPTION>
+			<PARAMETERS/>
+			<URL>
+			</URL>
+			<CONTAINER></CONTAINER>
+			<ACCESSRULES><ACCESSRULE ID="admin"/></ACCESSRULES>
+			<DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.GRID.FILL" NAME="Llena grilla de Vacaciones solicitud" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+					<PARAMETER parOrder="2" id="PERIODO" parType="111" parTypeName="Date"/>
+					<PARAMETER parOrder="3" id="COD_EMP" parType="4" parTypeName="Integer"/>
+				</PARAMETERS>
+				<SQL>
+SELECT FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC
+FROM CB_VAC_SOL
+WHERE COD_MF = @COD_MF.
+AND PERIODO = @PERIODO.
+AND COD_EMP = @COD_EMP.
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.GRID.INI" NAME="Inicializa Grilla" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS/>
+				<SQL>
+SELECT FEC_INI, FEC_FIN, DIAS, FEC_PEDIDO, PLUS_VAC, ADE_VAC, MES, ANIO, APROB_VAC
+FROM CB_VAC_SOL
+WHERE 1 &lt;&gt; 1
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.INI" NAME="CITI.VAC_SOL.INI" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS/>
+				<SQL>
+SELECT *
+FROM CB_VAC
+WHERE 1 &lt;&gt; 1
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.KEY" NAME="CITI.VAC_SOL.KEY" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="20190901" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+				</PARAMETERS>
+				<SQL>
+			SELECT A.COD_MF, A.PERIODO, A.COD_EMP, A.DIAS_ARRASTRE, A.DIAS_CALCULADOS, 
+				NVL((select SUM(S.DIAS) from cb_vac_sol S
+					WHERE S.COD_MF = A.COD_MF
+					AND S.PERIODO = A.PERIODO
+					), 0)AS DIAS_TOMADOS
+			, A.MAX_FRAG
+			FROM CB_VAC A
+			WHERE A.COD_MF = @COD_MF.
+			--WHERE A.COD_MF = 3000002249
+			AND A.PERIODO = (SELECT MAX(PERIODO) FROM CB_VAC WHERE A.COD_MF = COD_MF)
+
+		</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.SEL" NAME="CITI.VAC_SOL.SEL" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="LEGAJO" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="NOMBRE" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="3" id="DOCUMENTO" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<SQL>
+				</SQL>
+				<SQLSERVER>
+SELECT COD_MF AS Legajo, NOM_MF AS Nombre, IDENTFP_MF AS Documento
+FROM MAEFUNC
+WHERE (CAST(COD_MF AS varchar) LIKE '%' + @LEGAJO. + '%' OR @LEGAJO. IS NULL)
+AND (UPPER(NOM_MF) LIKE '%' + UPPER(@NOMBRE.) + '%' OR @NOMBRE. IS NULL)
+AND (CAST(IDENTFP_MF AS varchar) LIKE '%' + @DOCUMENTO. + '%' OR @DOCUMENTO. IS NULL)
+	</SQLSERVER>
+				<ORA>
+SELECT COD_MF AS Legajo, NOM_MF AS Nombre, CEDIDE_MF AS Documento
+FROM MAEFUNC2
+WHERE (TO_CHAR(COD_MF) LIKE '%' || @LEGAJO. || '%' OR @LEGAJO. IS NULL)
+AND (UPPER(NOM_MF) LIKE '%' || UPPER(@NOMBRE.) || '%' OR @NOMBRE. IS NULL)
+AND (TRIM(CEDIDE_MF) LIKE '%' || @DOCUMENTO. || '%' OR @DOCUMENTO. IS NULL)
+AND ROWNUM &lt;= 300
+	</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="31/12/2015" ID="CITI.VAC_SOL.SEL.FER" NAME="Consulta de feriados" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="20151231" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="FECHA" parType="111" parTypeName="Date"/>
+				</PARAMETERS>
+				<SQL>
+SELECT FECHA
+FROM QSVACFERIADOS      
+WHERE FECHA=@FECHA.
+--WHERE EXTRACT(YEAR FROM FECHA)=EXTRACT(YEAR FROM @FECHA.)
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="DIAS_FEST"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.SEL.INI" NAME="CITI.VAC_SOL.SEL.INI" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS/>
+				<SQL>
+SELECT COD_MF AS Legajo, NOM_MF AS Nombre, CEDIDE_MF AS Documento
+FROM MAEFUNC2
+WHERE 1 &lt;&gt; 1
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.SUB.ALL" NAME="Trae todas las sub keys" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+				</PARAMETERS>
+				<SQL>
+SELECT PERIODO, COD_EMP
+FROM CB_VAC
+WHERE COD_MF = @COD_MF.
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.SUB.KEY" NAME="Trae un registro según la sub key" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="20190901" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+					<PARAMETER parOrder="2" id="PERIODO" parType="111" parTypeName="Date"/>
+					<PARAMETER parOrder="3" id="COD_EMP" parType="4" parTypeName="Integer"/>
+				</PARAMETERS>
+				<SQL>
+
+				SELECT COD_MF, PERIODO, COD_EMP, DIAS_ARRASTRE, DIAS_CALCULADOS,
+							NVL((select SUM(S.DIAS) from cb_vac_sol S
+								WHERE S.COD_MF = A.COD_MF
+								AND S.PERIODO = A.PERIODO
+								), 0)
+							AS DIAS_TOMADOS
+						, MAX_FRAG
+				FROM CB_VAC A
+				WHERE COD_MF = @COD_MF.
+				AND PERIODO = @PERIODO.
+				AND COD_EMP = @COD_EMP.
+				</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.VAC.UPD" NAME="Actualizacion de tabla CB_VAC" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+					<PARAMETER parOrder="2" id="PERIODO" parType="111" parTypeName="Date"/>
+					<PARAMETER parOrder="3" id="COD_EMP" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="4" id="DIAS_ARRASTRE" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="5" id="DIAS_CALCULADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="6" id="DIAS_TOMADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="7" id="MAX_FRAG" parType="4" parTypeName="Integer"/>
+				</PARAMETERS>
+				<SQL>
+UPDATE CB_VAC
+SET DIAS_ARRASTRE = @DIAS_ARRASTRE. ,
+DIAS_CALCULADOS = @DIAS_CALCULADOS. ,
+DIAS_TOMADOS = @DIAS_TOMADOS. ,
+MAX_FRAG = @MAX_FRAG.
+WHERE COD_MF = @COD_MF.
+AND PERIODO = @PERIODO.
+AND COD_EMP = @COD_EMP.
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES/>
+				<LANG/>
+			</DATA><LIBRARY EDATE="01/01/1900" ID="CITI.VAC_SOL.LIB" NAME="Librería para Vacaciones" GROUP="CIT.VAC_SOL" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS/>
+				<REFERENCES>
+					<REFERENCE ID="TYPELIB"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+function Validaciones(VAC_SOL,COD_MF,PERIODO,COD_EMP){
+	if (COD_MF == null || COD_MF == 0){
+		result.setError("El legajo no puede ser 0");
+		return false;
+	}
+	if (PERIODO == null){
+		result.setError("El periodo no puede estar vacío");
+		return false;
+	}
+	if (COD_EMP == null || COD_EMP == 0){
+		result.setError("La empresa no puede ser 0");
+		return false;
+	}
+	for(i=0;i&lt;VAC_SOL.length;i++){
+		if (VAC_SOL[i].bxRowStatus == 'I' || VAC_SOL[i].bxRowStatus == 'U'){
+			if (VAC_SOL[i].FEC_PEDIDO == ''){
+				result.setError("La fecha de pedido no puede ser vacía");
+				return false;
+			}		
+			if (VAC_SOL[i].FEC_INI == ''){
+				result.setError("La fecha de inicio no puede ser vacía");
+				return false;
+			}
+			if (VAC_SOL[i].FEC_FIN == ''){
+				result.setError("La fecha de fin no puede ser vacía");
+				return false;
+			}
+			if (VAC_SOL[i].FEC_INI.dateFromService() &gt;= VAC_SOL[i].FEC_FIN.dateFromService()){
+				result.setError("La fecha de inicio no puede ser mayor o igual a la fecha de fin");
+				return false;
+			}
+			if (VAC_SOL[i].DIAS == null || VAC_SOL[i].DIAS &lt;= 0){
+				result.setError("Los dias no pueden ser 0");
+				return false;
+			}
+			if (VAC_SOL[i].MES == null || VAC_SOL[i].MES &lt;= 0 || VAC_SOL[i].MES &gt; 12){
+				result.setError("Mes de imputación incorrecto o en blanco");
+				return false;
+			}			
+			if (VAC_SOL[i].ANIO == null || VAC_SOL[i].ANIO &lt;= 2000 || VAC_SOL[i].ANIO &gt; 2050){
+				result.setError("Año de imputación incorrecto o en blanco");
+				return false;
+			}			
+		}
+	}	
+	return true;
+}
+
+function SaveVacSolGrid(VAC_SOL,COD_MF,PERIODO,COD_EMP,sesion){
+
+	empowerTypes();
+	
+	for(i=0;i&lt;VAC_SOL.length;i++){
+		switch(VAC_SOL[i].bxRowStatus){
+			case 'I':
+				InsertVacSol(VAC_SOL[i],COD_MF,PERIODO,COD_EMP,sesion);
+				break;
+			case 'U':
+				UpdateVacSol(VAC_SOL[i],COD_MF,PERIODO,COD_EMP,sesion);
+				break;
+			case 'D':
+				DeleteVacSol(VAC_SOL[i],COD_MF,PERIODO,COD_EMP,sesion);
+				break;
+			default:
+				break;				
+		}
+	}
+}
+
+function InsertVacSol(VAC_SOLi,COD_MF,PERIODO,COD_EMP,sesion){
+
+	sql = "INSERT INTO CB_VAC_SOL(COD_MF,PERIODO,COD_EMP,FEC_INI,FEC_FIN,DIAS,FEC_PEDIDO,PLUS_VAC,ADE_VAC,MES,ANIO,APROB_VAC,LAST_USR,LAST_HOST) VALUES (";
+	sql += COD_MF.toDB() + ", ";
+	sql += PERIODO.toDB() + ", ";
+	sql += COD_EMP.toDB() + ", ";
+	sql += VAC_SOLi.FEC_INI.dateFromService().toDB() + ", ";
+	sql += VAC_SOLi.FEC_FIN.dateFromService().toDB() + ", ";
+	sql += VAC_SOLi.DIAS.toInt().toDB() + ", ";
+	sql += VAC_SOLi.FEC_PEDIDO.dateFromService().toDB() + ", ";
+	sql += VAC_SOLi.PLUS_VAC.toDB() + ", ";
+	sql += VAC_SOLi.ADE_VAC.toDB() + ", ";
+	sql += VAC_SOLi.MES.toInt().toDB() + ", ";
+	sql += VAC_SOLi.ANIO.toInt().toDB() + ", ";
+	sql += VAC_SOLi.APROB_VAC.toDB() + ", ";
+	sql += sesion.USR.toDB() + ", ";
+	sql += sesion.NAMEHOST.toDB() + ") ";
+
+	engine.con.Execute(sql);
+
+}
+
+function UpdateVacSol(VAC_SOLi,COD_MF,PERIODO,COD_EMP,sesion){
+
+	var sql = "UPDATE CB_VAC_SOL SET ";
+	sql += "FEC_INI = " + VAC_SOLi.FEC_INI.dateFromService().toDB() + ", ";
+	sql += "FEC_FIN = " + VAC_SOLi.FEC_FIN.dateFromService().toDB() + ", ";
+	sql += "DIAS = " + VAC_SOLi.DIAS.toInt().toDB() + ", ";
+	sql += "FEC_PEDIDO = " + VAC_SOLi.FEC_PEDIDO.dateFromService().toDB() + ", ";
+	sql += "PLUS_VAC = " + VAC_SOLi.PLUS_VAC.toDB() + ", ";
+	sql += "ADE_VAC = " + VAC_SOLi.ADE_VAC.toDB() + ", ";
+	sql += "MES = " + VAC_SOLi.MES.toInt().toDB() + ", ";
+	sql += "ANIO = " + VAC_SOLi.ANIO.toInt().toDB() + ", ";
+	sql += "APROB_VAC = " + VAC_SOLi.APROB_VAC.toDB() + ", ";
+	sql += "LAST_USR = " + sesion.USR.toDB() + ", ";
+	sql += "LAST_HOST = " + sesion.NAMEHOST.toDB() + " ";
+	sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+	sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+	sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+	sql += "AND FEC_INI = " + VAC_SOLi.bxSelVal_FEC_INI.dateFromService().toDB();
+
+	engine.con.Execute(sql);
+
+}
+
+function DeleteVacSol(VAC_SOL,COD_MF,PERIODO,COD_EMP,sesion){
+
+	sql = "INSERT INTO A_CB_VAC_SOL(QS_A_FECHA, QS_A_USUARIO, QS_A_HOST, QS_A_ACCION, COD_MF,PERIODO,COD_EMP,FEC_INI,FEC_FIN,DIAS,FEC_PEDIDO,PLUS_VAC,ADE_VAC,MES,ANIO,APROB_VAC) ";
+	sql += "SELECT SYSDATE, ";
+	sql += sesion.USR.toDB() + ", ";
+	sql += sesion.NAMEHOST.toDB() + ", ";
+	sql += "'D', ";
+	sql += "COD_MF,PERIODO,COD_EMP,FEC_INI,FEC_FIN,DIAS,FEC_PEDIDO,PLUS_VAC,ADE_VAC,MES,ANIO,APROB_VAC ";
+	sql += "FROM CB_VAC_SOL ";
+	sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+	sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+	sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+	sql += "AND FEC_INI = " + VAC_SOL.bxSelVal_FEC_INI.dateFromService().toDB();
+	
+	engine.con.Execute(sql); 
+	
+	var sql = "DELETE FROM CB_VAC_SOL "
+	sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+	sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+	sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+	sql += "AND FEC_INI = " + VAC_SOL.bxSelVal_FEC_INI.dateFromService().toDB();
+	
+	engine.con.Execute(sql); 
+
+}
+	</CODE>
+				<ACCESSRULES/>
+			</LIBRARY><SCRIPT EDATE="01/01/1900" ID="CITI.VAC_SOL.DEL" NAME="Elimina registro de solicitud de vacaciones" GROUP="CIT.VAC_SOL" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+					<PARAMETER parOrder="2" id="PERIODO" parType="111" parTypeName="Date"/>
+					<PARAMETER parOrder="3" id="COD_EMP" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="4" id="BXTOKEN" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<REFERENCES>
+					<REFERENCE ID="TYPELIB"/>
+					<REFERENCE ID="CITI.COMUN"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+empowerTypes();
+
+var COD_MF = service.getParameter('COD_MF').toInt();
+var PERIODO = service.getParameter('PERIODO').parseDate();
+var COD_EMP = service.getParameter('COD_EMP').toInt();
+var BXTOKEN = service.getParameter('BXTOKEN');
+
+var ses = GetSessionData(BXTOKEN);
+
+engine.con.BeginTrans; 
+
+var sql = "INSERT INTO A_CB_VAC(QS_A_FECHA, QS_A_USUARIO, QS_A_HOST, QS_A_ACCION, COD_MF, PERIODO, COD_EMP, DIAS_ARRASTRE, DIAS_CALCULADOS, DIAS_TOMADOS, MAX_FRAG) ";
+sql += "SELECT SYSDATE, ";
+sql += ses.USR.toDB() + ", ";
+sql += ses.NAMEHOST.toDB() + ", ";
+sql += "'D', ";
+sql += "COD_MF, PERIODO, COD_EMP, DIAS_ARRASTRE, DIAS_CALCULADOS, DIAS_TOMADOS, MAX_FRAG ";
+sql += "FROM CB_VAC ";
+sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+	
+engine.con.Execute(sql);
+
+
+var sql = "DELETE FROM CB_VAC ";
+sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+
+engine.con.Execute(sql);
+
+var sql = "INSERT INTO A_CB_VAC_SOL(QS_A_FECHA, QS_A_USUARIO, QS_A_HOST, QS_A_ACCION, COD_MF,PERIODO,COD_EMP,FEC_INI,FEC_FIN,DIAS,FEC_PEDIDO,PLUS_VAC,ADE_VAC,MES,ANIO,APROB_VAC) ";
+sql += "SELECT SYSDATE, ";
+sql += ses.USR.toDB() + ", ";
+sql += ses.NAMEHOST.toDB() + ", ";
+sql += "'D', ";
+sql += "COD_MF,PERIODO,COD_EMP,FEC_INI,FEC_FIN,DIAS,FEC_PEDIDO,PLUS_VAC,ADE_VAC,MES,ANIO,APROB_VAC ";
+sql += "FROM CB_VAC_SOL ";
+sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+	
+engine.con.Execute(sql);
+
+
+sql = "DELETE FROM CB_VAC_SOL ";
+sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+
+engine.con.Execute(sql);
+
+engine.con.CommitTrans;
+	</CODE>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.UPD"/></ACCESSRULES>
+			</SCRIPT><SCRIPT EDATE="01/01/1900" ID="CITI.VAC_SOL.INS" NAME="Insercion de Vacaciones" GROUP="CIT.VAC_SOL" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+					<PARAMETER parOrder="2" id="PERIODO" parType="111" parTypeName="Date"/>
+					<PARAMETER parOrder="3" id="COD_EMP" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="4" id="DIAS_ARRASTRE" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="5" id="DIAS_CALCULADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="6" id="DIAS_TOMADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="7" id="MAX_FRAG" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="8" id="VAC_SOL" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="9" id="BXTOKEN" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<REFERENCES>
+					<REFERENCE ID="TYPELIB"/>
+					<REFERENCE ID="CITI.VAC_SOL.LIB"/>
+					<REFERENCE ID="JSON"/>
+					<REFERENCE ID="CITI.COMUN"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+empowerTypes();
+
+var COD_MF = service.getParameter('COD_MF').toInt();
+var PERIODO = service.getParameter('PERIODO').parseDate();
+var COD_EMP = service.getParameter('COD_EMP').toInt();
+var DIAS_ARRASTRE = service.getParameter('DIAS_ARRASTRE').toInt();
+var DIAS_CALCULADOS = service.getParameter('DIAS_CALCULADOS').toInt();
+var DIAS_TOMADOS = service.getParameter('DIAS_TOMADOS').toInt();
+var MAX_FRAG = service.getParameter('MAX_FRAG').toInt();   
+var VAC_SOL = JSON.parse(service.getParameter('VAC_SOL'));  
+var BXTOKEN = service.getParameter('BXTOKEN');
+
+
+if (Validaciones(VAC_SOL,COD_MF,PERIODO,COD_EMP)){
+
+	var ses = GetSessionData(BXTOKEN);
+	
+	engine.con.BeginTrans; 
+	
+	var sql = "INSERT INTO CB_VAC (COD_MF, PERIODO, COD_EMP, DIAS_ARRASTRE, DIAS_CALCULADOS, DIAS_TOMADOS, MAX_FRAG, LAST_USR, LAST_HOST) VALUES(";
+	sql += COD_MF.toDB() + ", ";
+	sql += PERIODO.toDB() + ", ";
+	sql += COD_EMP.toDB() + ", ";
+	sql += DIAS_ARRASTRE.toDB() + ", ";
+	sql += DIAS_CALCULADOS.toDB() + ", ";
+	sql += DIAS_TOMADOS.toDB() + ", ";
+	sql += MAX_FRAG.toDB() + ", ";
+	sql += ses.USR.toDB() + ", ";
+	sql += ses.NAMEHOST.toDB() + ") ";
+	
+	engine.con.Execute(sql);
+	
+	SaveVacSolGrid(VAC_SOL,COD_MF,PERIODO,COD_EMP,ses);
+	
+	engine.con.CommitTrans;
+}
+	</CODE>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.UPD"/></ACCESSRULES>
+			</SCRIPT><SCRIPT EDATE="01/01/1900" ID="CITI.VAC_SOL.UPD" NAME="Actualizacion de Vacaciones" GROUP="CIT.VAC_SOL" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+					<PARAMETER parOrder="2" id="PERIODO" parType="111" parTypeName="Date"/>
+					<PARAMETER parOrder="3" id="COD_EMP" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="4" id="DIAS_ARRASTRE" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="5" id="DIAS_CALCULADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="6" id="DIAS_TOMADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="7" id="MAX_FRAG" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="8" id="VAC_SOL" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="9" id="BXTOKEN" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<REFERENCES>
+					<REFERENCE ID="JSON"/>
+					<REFERENCE ID="TYPELIB"/>
+					<REFERENCE ID="CITI.VAC_SOL.LIB"/>
+					<REFERENCE ID="CITI.COMUN"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+empowerTypes();
+
+var COD_MF = service.getParameter('COD_MF').toInt();
+var PERIODO = service.getParameter('PERIODO').parseDate();
+var COD_EMP = service.getParameter('COD_EMP').toInt();
+var DIAS_ARRASTRE = service.getParameter('DIAS_ARRASTRE').toInt();
+var DIAS_CALCULADOS = service.getParameter('DIAS_CALCULADOS').toInt();
+var DIAS_TOMADOS = service.getParameter('DIAS_TOMADOS').toInt();
+var MAX_FRAG = service.getParameter('MAX_FRAG').toInt();   
+var VAC_SOL = JSON.parse(service.getParameter('VAC_SOL'));  
+var BXTOKEN = service.getParameter('BXTOKEN');
+
+if (Validaciones(VAC_SOL,COD_MF,PERIODO,COD_EMP)){
+
+	var ses = GetSessionData(BXTOKEN);
+
+	engine.con.BeginTrans; 
+	
+	var sql = 'UPDATE CB_VAC ';
+	sql += 'SET DIAS_ARRASTRE = ' + DIAS_ARRASTRE.toDB() + ' , ';
+	sql += 'DIAS_CALCULADOS = ' + DIAS_CALCULADOS.toDB() + ' , ';
+	sql += 'DIAS_TOMADOS = ' + DIAS_TOMADOS.toDB() + ' , ';
+	sql += 'MAX_FRAG = ' + MAX_FRAG.toDB() + ', ';
+	sql += 'LAST_USR = ' + ses.USR.toDB() + ', ';
+	sql += 'LAST_HOST = ' + ses.NAMEHOST.toDB() + ' ';
+	sql += 'WHERE COD_MF = ' + COD_MF.toDB() + ' ';
+	sql += 'AND PERIODO = ' + PERIODO.toDB() + ' ';
+	sql += 'AND COD_EMP = ' + COD_EMP.toDB() + ' ';
+	
+	engine.con.Execute(sql);
+	
+	SaveVacSolGrid(VAC_SOL,COD_MF,PERIODO,COD_EMP,ses);
+	
+	engine.con.CommitTrans;
+}
+	</CODE>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.UPD"/></ACCESSRULES>
+			</SCRIPT></MENU><MENU EDATE="31/03/2015" ID="CITI.MIRECIBO" NAME="Cheques" GROUP="CITI.PORTAL" UED="20150331" ORD="">
+			<DESCRIPTION></DESCRIPTION>
+			<PARAMETERS/>
+			<URL>
+			</URL>
+			<CONTAINER></CONTAINER>
+			<ACCESSRULES><ACCESSRULE ID="MIRECIBO"/><ACCESSRULE ID="admin"/></ACCESSRULES>
+			<DATA delimL="@" delimR="." EDATE="01/03/2019" ID="BXT_FILEDATA_SEL" NAME="FILEDATA SEL" GROUP="CITI.MIRECIBO" ORD="" UED="20190601" VERSION="1.1">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="TOKEN" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="COD_LQ" parType="4" parTypeName="Integer"/>
+				</PARAMETERS>
+				<SQL>
+				</SQL>
+				<OUTPUT>
+				</OUTPUT>
+				<ACCESSRULES><ACCESSRULE ID="guest"/></ACCESSRULES>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+SELECT  FILENAME, TO_CHAR(R.COD_LQ) || ' ' || RTRIM(to_char(FDES_LQ, 'Month', 'NLS_DATE_LANGUAGE = spanish')) || ' ' || to_char(FDES_LQ, 'YYYY') || case WHEN DESC_LQ LIKE '%SAC%' THEN ' Sac' END AS NOMBRE, 'xDn35Psd2A' AS CLAVE
+FROM BASEARG.CB_RECIBOS R, BASEARG.LIQUIDAC L
+WHERE COD_MF = (SELECT COD_MF FROM CB_SID WHERE S_ID = @TOKEN. )  
+AND R.COD_LQ = L.COD_LQ
+AND R.COD_LQ = @COD_LQ.
+	</ORA>
+				<INF>
+				</INF>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.COD_LQ_RECIBO.CMB" NAME="Filtro liq para descarga" GROUP="CITI.MIRECIBO" VERSION="1.1" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="LIQUIDACION" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="DESCRIPCION" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="3" id="USER" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<SQL>
+				</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+SELECT LIQUIDACION, DESCRIPCION
+FROM (
+SELECT A.COD_LQ AS LIQUIDACION, A.DESC_LQ AS DESCRIPCION
+FROM LIQUIDAC A
+WHERE (TO_CHAR(A.COD_LQ) LIKE '%' || @LIQUIDACION. || '%' OR @LIQUIDACION. IS NULL)
+AND (UPPER(A.DESC_LQ) LIKE '%' || UPPER(@DESCRIPCION.) || '%' OR @DESCRIPCION. IS NULL)
+ORDER BY A.COD_LQ DESC)
+WHERE ROWNUM &lt;= 300
+	</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="admin"/><ACCESSRULE ID="guest"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/03/2019" ID="CITI.MIRECIBO.INI" NAME="CITI.MIRECIBO.INI" GROUP="CITI.MIRECIBO" VERSION="1.1" UED="20190301" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS/>
+				<SQL>
+SELECT R.COD_LQ AS LIQUIDACION,   
+		TO_CHAR(FDES_LQ, 'YYYY') AS ANIO ,
+		TO_CHAR(TO_NUMBER(TO_CHAR(FDES_LQ, 'MM'))) AS MES , 
+		DESC_LQ AS DESCRIPCION
+FROM CB_RECIBOS R, LIQUIDAC L WHERE L.COD_LQ = R.COD_LQ
+WHERE 1 &lt;&gt; 1
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES/>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/05/2019" ID="CITI.MIRECIBO.KEY" NAME="CITI.MIRECIBO.KEY" GROUP="CITI.MIRECIBO" VERSION="1.1" UED="20190501" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="ANIO" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="MES" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="3" id="DESCRIPCION" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="4" id="LIQUIDACION" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="5" id="BXTOKEN" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<SQL>
+SELECT 	DISTINCT R.COD_LQ AS LIQUIDACION,   
+		TO_CHAR(FDES_LQ, 'YYYY') AS ANIO ,
+		TO_CHAR(TO_NUMBER(TO_CHAR(FDES_LQ, 'MM'))) AS MES , 
+		DESC_LQ AS DESCRIPCION
+FROM 	CB_RECIBOS R, LIQUIDAC L
+WHERE 	R.COD_LQ = @LIQUIDACION.     
+AND 	L.COD_LQ = R.COD_LQ   
+AND		R.HABILITADO = -1 
+AND		R.COD_MF = (SELECT COD_MF FROM CB_SID WHERE S_ID = @BXTOKEN. )         
+ORDER BY 1 DESC
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="MIRECIBO"/><ACCESSRULE ID="admin"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.MIRECIBO.LOG" NAME="Descarga Recibo" GROUP="CITI.MIRECIBO" VERSION="1.1" UED="20190302" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_LQ" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="BXTOKEN" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<SQL>
+INSERT INTO BASEARG.CB_RECIBOS_LOG (S_ID, CDATE, COD_MF, COD_LQ)
+VALUES ( NVL(@BXTOKEN., '0') , SYSDATE, NVL((SELECT COD_MF FROM CB_SID WHERE S_ID = @BXTOKEN.),0),  NVL( @COD_LQ.,0))
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="MIRECIBO"/><ACCESSRULE ID="guest"/><ACCESSRULE ID="user"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/05/2019" ID="CITI.MIRECIBO.SEL" NAME="CITI.MIRECIBO.SEL" GROUP="CITI.MIRECIBO" VERSION="1.1" UED="20190501" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="ANIO" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="MES" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="3" id="DESCRIPCION" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="4" id="LIQUIDACION" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="5" id="BXTOKEN" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<SQL>
+SELECT R.COD_LQ AS LIQUIDACION,   
+		TO_CHAR(FDES_LQ, 'YYYY') AS ANIO ,
+		TO_CHAR(TO_NUMBER(TO_CHAR(FDES_LQ, 'MM'))) AS MES , 
+		DESC_LQ AS DESCRIPCION
+FROM 	CB_RECIBOS R, LIQUIDAC L
+WHERE  	(TO_CHAR(FDES_LQ, 'YYYY') = @ANIO. OR @ANIO. IS NULL) 
+ AND  	(TO_CHAR(TO_NUMBER(TO_CHAR(FDES_LQ, 'MM'))) = @MES. OR @MES. IS NULL) 
+AND		(R.COD_LQ = @LIQUIDACION. OR  @LIQUIDACION. IS NULL) 
+AND 	(UPPER(DESC_LQ) LIKE '%'||UPPER(@DESCRIPCION.)||'%' OR  @DESCRIPCION. IS NULL)
+AND R.COD_LQ = L.COD_LQ  
+AND ROWNUM &lt;= 300
+AND		R.HABILITADO = -1 
+AND		R.COD_MF = (SELECT COD_MF FROM CB_SID WHERE S_ID = @BXTOKEN. )  
+ORDER BY 1 DESC, 2, 3
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="MIRECIBO"/><ACCESSRULE ID="admin"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/03/2019" ID="CITI.MIRECIBO.SEL.INI" NAME="CITI.MIRECIBO.SEL.INI" GROUP="CITI.MIRECIBO" VERSION="1.1" UED="20190301" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS/>
+				<SQL>
+SELECT R.COD_LQ AS LIQUIDACION,   
+		TO_CHAR(FDES_LQ, 'YYYY') AS ANIO ,
+		TO_CHAR(TO_NUMBER(TO_CHAR(FDES_LQ, 'MM'))) AS MES , 
+		DESC_LQ AS DESCRIPCION
+FROM CB_RECIBOS R, LIQUIDAC L
+WHERE 1 &lt;&gt; 1                 AND L.COD_LQ = R.COD_LQ
+	</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="MIRECIBO"/><ACCESSRULE ID="admin"/></ACCESSRULES>
+				<LANG/>
+			</DATA><LIBRARY EDATE="01/05/2015" ID="CITI.MIRECIBO.LIB" NAME="Librería para MIRECIBO" GROUP="CITI.MIRECIBO" UED="20150501" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS/>
+				<REFERENCES>
+					<REFERENCE ID="TYPELIB"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+function SaveCHEQUESGrid(CHEQUES,COD_EMP, BANKING,DESCR50,sesion){   
+
+	empowerTypes();
+
+	for(i=0;i&lt;CHEQUES.length;i++){
+		switch(CHEQUES[i].bxRowStatus){
+			case 'I':
+				InsertCHEQUES(CHEQUES[i],COD_EMP, BANKING, DESCR50, sesion);
+				break;
+			case 'U':
+				UpdateCHEQUES(CHEQUES[i],COD_EMP, BANKING, DESCR50, sesion);
+				break;
+			case 'D':
+				DeleteCHEQUES(CHEQUES[i],COD_EMP, BANKING, DESCR50, sesion);
+				break;
+			default:
+				break;
+		}
+	}
+}
+
+function InsertCHEQUES(CHEQUESi,COD_EMP, BANKING, DESCR50, sesion){
+           
+	sql = "INSERT INTO CB_CHQDET(COD_EMP, BANKING, DESCR50, CUENTA, COD_MV, LAST_USR,LAST_HOST) VALUES (";
+	sql += COD_EMP + ", ";
+	sql += BANKING + ", ";
+	sql += DESCR50 + ", ";
+	sql += CHEQUESi.CUENTA.toDB() + ", ";
+	sql += CHEQUESi.COD_MV.toDB() + ", ";
+	sql += sesion.USR.toDB() + ", ";
+	sql += sesion.NAMEHOST.toDB() + ") ";	
+
+	engine.con.Execute(sql);
+
+}
+
+function UpdateCHEQUES(CHEQUESi,COD_EMP, BANKING, DESCR50, sesion){
+
+	
+	/* NO SE ACTUALIZAN FILAS
+	var sql = "UPDATE CB_CHQDET SET "; 
+	sql += "CUENTA = " + CHEQUESi.CUENTA.toDB() + ", ";
+	sql += "COD_MV = " + CHEQUESi.COD_MV.toDB() + ", ";
+	sql += "LAST_USR = " + sesion.USR.toDB() + ", ";
+	sql += "LAST_HOST = " + sesion.NAMEHOST.toDB() + " ";	
+	sql += "WHERE COD_EMP = " + COD_EMP + " ";
+	sql += "AND BANKING = " + BANKING + " ";
+	sql += "AND DESCR50 = " + DESCR50 + " ";
+	engine.con.Execute(sql);   
+	*/
+
+
+}
+
+function DeleteCHEQUES(CHEQUESi,COD_EMP, BANKING, DESCR50, sesion){       
+
+	sql = "INSERT INTO A_CB_CHQDET(QS_A_FECHA, QS_A_USUARIO, QS_A_HOST, QS_A_ACCION,COD_EMP, BANKING, DESCR50, CUENTA, COD_MV) ";
+	sql += "SELECT SYSDATE, ";
+	sql += sesion.USR.toDB() + ", ";
+	sql += sesion.NAMEHOST.toDB() + ", ";
+	sql += "'D', ";
+	sql += "COD_EMP, BANKING, DESCR50, CUENTA, COD_MV ";
+	sql += "FROM CB_CHQDET ";
+	sql += "WHERE COD_EMP = " + COD_EMP + " ";
+	sql += "AND BANKING = " + BANKING + " ";
+	sql += "AND DESCR50 = " + DESCR50 + " ";   
+	sql += "AND CUENTA = " + CHEQUESi.CUENTA.toDB() + " ";  
+	sql += "AND COD_MV = " + CHEQUESi.COD_MV.toDB() + " ";  
+
+	engine.con.Execute(sql); 
+
+	var sql = "DELETE FROM CB_CHQDET "
+	sql += "WHERE COD_EMP = " + COD_EMP + " ";
+	sql += "AND BANKING = " + BANKING + " ";
+	sql += "AND DESCR50 = " + DESCR50 + " ";  
+	sql += "AND CUENTA = " + CHEQUESi.CUENTA.toDB() + " ";  
+	sql += "AND COD_MV = " + CHEQUESi.COD_MV.toDB() + " ";  	
+
+	engine.con.Execute(sql); 
+
+}
+	</CODE>
+				<ACCESSRULES><ACCESSRULE ID="LISTAS_CONCEPTOS"/><ACCESSRULE ID="MIRECIBO"/><ACCESSRULE ID="admin"/></ACCESSRULES>
+			</LIBRARY><SCRIPT EDATE="08/07/2015" ID="CITI.MIRECIBO.DEL" NAME="Elimina los cheques" GROUP="CITI.MIRECIBO" UED="20150708" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_EMP" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="BXTOKEN" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="3" id="BANKING" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="4" id="DESCR50" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<REFERENCES>
+					<REFERENCE ID="JSON"/>
+					<REFERENCE ID="TYPELIB"/>
+					<REFERENCE ID="CITI.COMUN"/>
+					<REFERENCE ID="CITI.PAR_PREPAGA.LIB"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+empowerTypes();
+
+var COD_EMP = service.getParameter('COD_EMP').toDB();
+var BANKING = service.getParameter('BANKING').toDB();
+var DESCR50 = service.getParameter('DESCR50').toDB();
+var BXTOKEN = service.getParameter('BXTOKEN');     
+
+var ses = GetSessionData(BXTOKEN);  
+
+engine.con.BeginTrans;         
+
+sql = "INSERT INTO A_CB_CHQ(QS_A_FECHA, QS_A_USUARIO, QS_A_HOST, QS_A_ACCION,COD_EMP, BANKING, DESCR50, COD_BANCO, DESCR20, DESCR254) ";
+sql += "SELECT SYSDATE, ";
+sql += ses.USR.toDB() + ", ";
+sql += ses.NAMEHOST.toDB() + ", ";
+sql += "'D', ";
+sql += "COD_EMP, BANKING, DESCR50, COD_BANCO, DESCR20, DESCR254 ";
+sql += "FROM CB_CHQ ";
+sql += "WHERE  COD_EMP = " + COD_EMP + " ";  
+sql += "AND  BANKING = " + BANKING + " ";  
+sql += "AND  DESCR50 = " + DESCR50 + " ";   
+
+engine.con.Execute(sql);
+
+var sql2 = 	"DELETE CB_CHQ ";
+sql2 += 	"WHERE  COD_EMP = " + COD_EMP + " ";  
+sql2 += 	"AND  BANKING = " + BANKING + " ";  
+sql2 += 	"AND  DESCR50 = " + DESCR50 + " ";   
+                        
+engine.con.Execute(sql2);   
+
+sql = "INSERT INTO A_CB_CHQDET(QS_A_FECHA, QS_A_USUARIO, QS_A_HOST, QS_A_ACCION,COD_EMP, BANKING, DESCR50, CUENTA, COD_MV) ";
+sql += "SELECT SYSDATE, ";
+sql += ses.USR.toDB() + ", ";
+sql += ses.NAMEHOST.toDB() + ", ";
+sql += "'D', ";
+sql += "COD_EMP, BANKING, DESCR50, CUENTA, COD_MV ";
+sql += "FROM CB_CHQDET ";
+sql += "WHERE  COD_EMP = " + COD_EMP + " ";  
+sql += "AND  BANKING = " + BANKING + " ";  
+sql += "AND  DESCR50 = " + DESCR50 + " ";  
+
+engine.con.Execute(sql);       
+
+var sql2 = 	"DELETE CB_CHQDET  ";
+sql2 += 	"WHERE  COD_EMP = " + COD_EMP + " ";  
+sql2 += 	"AND  BANKING = " + BANKING + " ";  
+sql2 += 	"AND  DESCR50 = " + DESCR50 + " ";   
+                        
+engine.con.Execute(sql2);
+
+engine.con.CommitTrans;
+	</CODE>
+				<ACCESSRULES><ACCESSRULE ID="MIRECIBO"/></ACCESSRULES>
+			</SCRIPT><SCRIPT EDATE="08/07/2015" ID="CITI.MIRECIBO.INS" NAME="Ingresa nueva CHEQUES" GROUP="CITI.MIRECIBO" UED="20150708" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_EMP" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="PAR_CHEQUES" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="3" id="BXTOKEN" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="4" id="BANKING" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="5" id="DESCR50" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="6" id="COD_BANCO" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="7" id="DESCR254" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="8" id="DESCR20" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<REFERENCES>
+					<REFERENCE ID="JSON"/>
+					<REFERENCE ID="TYPELIB"/>
+					<REFERENCE ID="CITI.COMUN"/>
+					<REFERENCE ID="CITI.MIRECIBO.LIB"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+empowerTypes();
+
+var COD_EMP = service.getParameter('COD_EMP').toDB();
+var BANKING = service.getParameter('BANKING').toDB();
+var DESCR50 = service.getParameter('DESCR50').toDB();
+var COD_BANCO = service.getParameter('COD_BANCO').toDB();
+var DESCR20 = service.getParameter('DESCR20').toDB();
+var DESCR254 = service.getParameter('DESCR254').toDB();
+var CHEQUES = JSON.parse(service.getParameter('PAR_CHEQUES'));  
+var BXTOKEN = service.getParameter('BXTOKEN');     
+
+var ses = GetSessionData(BXTOKEN);  
+
+
+engine.con.BeginTrans; 
+
+SaveCHEQUESGrid(CHEQUES,COD_EMP, BANKING,DESCR50 ,ses); 
+
+var sql = 	"INSERT INTO CB_CHQ (COD_EMP, BANKING, DESCR50, COD_BANCO, DESCR20, DESCR254, LAST_USR, LAST_HOST) VALUES (";
+sql += 		COD_EMP + ", ";  
+sql += 		BANKING + ", ";  
+sql += 		DESCR50 + ", ";  
+sql += 		COD_BANCO + ", ";  
+sql += 		DESCR20 + ", ";  
+sql += 		DESCR254 + ", ";    
+sql += 		ses.USR.toDB() + ", ";
+sql +=		ses.NAMEHOST.toDB() + ") ";
+                        
+engine.con.Execute(sql);
+
+engine.con.CommitTrans;
+	</CODE>
+				<ACCESSRULES><ACCESSRULE ID="MIRECIBO"/></ACCESSRULES>
+			</SCRIPT><SCRIPT EDATE="05/03/2015" ID="CITI.MIRECIBO.UPD" NAME="Actualiza PAR_CHEQUES" GROUP="CITI.MIRECIBO" UED="20150305" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_EMP" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="PAR_CHEQUES" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="3" id="BXTOKEN" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="4" id="BANKING" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="5" id="DESCR50" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="6" id="COD_BANCO" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="7" id="DESCR254" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="8" id="DESCR20" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<REFERENCES>
+					<REFERENCE ID="JSON"/>
+					<REFERENCE ID="TYPELIB"/>
+					<REFERENCE ID="CITI.COMUN"/>
+					<REFERENCE ID="CITI.MIRECIBO.LIB"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+empowerTypes();
+
+var COD_EMP = service.getParameter('COD_EMP').toDB();
+var BANKING = service.getParameter('BANKING').toDB();
+var DESCR50 = service.getParameter('DESCR50').toDB();
+var COD_BANCO = service.getParameter('COD_BANCO').toDB();
+var DESCR20 = service.getParameter('DESCR20').toDB();
+var DESCR254 = service.getParameter('DESCR254').toDB();
+var CHEQUES = JSON.parse(service.getParameter('PAR_CHEQUES'));  
+var BXTOKEN = service.getParameter('BXTOKEN');    
+
+var ses = GetSessionData(BXTOKEN);  
+
+engine.con.BeginTrans; 
+
+
+SaveCHEQUESGrid(CHEQUES,COD_EMP, BANKING,DESCR50 ,ses);  
+
+var sql = 	"UPDATE CB_CHQ SET  ";
+sql += 		"COD_BANCO = trim(" + COD_BANCO + "), ";
+sql += 		"DESCR20 = trim(" + DESCR20 + "), ";    
+sql += 		"DESCR254 = trim(" + DESCR254 + "), ";    
+sql += 		"LAST_USR = " + ses.USR.toDB() + ", ";
+sql += 		"LAST_HOST = " + ses.NAMEHOST.toDB() + " ";
+sql += 		"WHERE  COD_EMP = " + COD_EMP + " ";  
+sql += 		"AND  BANKING = " + BANKING + " ";  
+sql += 		"AND  DESCR50 = " + DESCR50 + " ";  
+                        
+engine.con.Execute(sql);
+
+engine.con.CommitTrans;
+	</CODE>
+				<ACCESSRULES><ACCESSRULE ID="MIRECIBO"/><ACCESSRULE ID="admin"/></ACCESSRULES>
+			</SCRIPT></MENU></GROUP></SERVICES>

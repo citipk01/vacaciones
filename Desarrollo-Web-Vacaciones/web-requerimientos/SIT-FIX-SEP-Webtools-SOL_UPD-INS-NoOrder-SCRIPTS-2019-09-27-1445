@@ -1,0 +1,434 @@
+<SERVICES><GROUP EDATE="01/01/1900" ID="CITI.PORTAL" NAME="Servicios del Portal Citi" GROUP="" UED="19000101" ORD="">
+		<DESCRIPTION></DESCRIPTION>
+		<ACCESSRULES/><PARAMETERS/><MENU EDATE="01/01/1900" ID="CIT.VAC_SOL" NAME="Solicitud de Vacaciones" GROUP="CITI.PORTAL" UED="19000101" ORD="">
+			<DESCRIPTION></DESCRIPTION>
+			<PARAMETERS/>
+			<URL>
+			</URL>
+			<CONTAINER></CONTAINER>
+			<ACCESSRULES><ACCESSRULE ID="admin"/></ACCESSRULES>
+			<DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.KEY" NAME="CITI.VAC_SOL.KEY" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="20190901" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+				</PARAMETERS>
+				<SQL>
+			SELECT A.COD_MF, A.PERIODO, A.COD_EMP, A.DIAS_ARRASTRE, A.DIAS_CALCULADOS, 
+				NVL((select SUM(S.DIAS) from cb_vac_sol S
+					WHERE S.COD_MF = A.COD_MF
+					AND S.PERIODO = A.PERIODO
+					), 0)AS DIAS_TOMADOS
+			, A.MAX_FRAG
+			FROM CB_VAC A
+			WHERE A.COD_MF = @COD_MF.
+			--WHERE A.COD_MF = 3000002249
+			AND A.PERIODO = (SELECT MAX(PERIODO) FROM CB_VAC WHERE A.COD_MF = COD_MF)
+
+		</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA><DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.SEL" NAME="CITI.VAC_SOL.SEL" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="19000101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="LEGAJO" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="2" id="NOMBRE" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="3" id="DOCUMENTO" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<SQL>
+				</SQL>
+				<SQLSERVER>
+SELECT COD_MF AS Legajo, NOM_MF AS Nombre, IDENTFP_MF AS Documento
+FROM MAEFUNC
+WHERE (CAST(COD_MF AS varchar) LIKE '%' + @LEGAJO. + '%' OR @LEGAJO. IS NULL)
+AND (UPPER(NOM_MF) LIKE '%' + UPPER(@NOMBRE.) + '%' OR @NOMBRE. IS NULL)
+AND (CAST(IDENTFP_MF AS varchar) LIKE '%' + @DOCUMENTO. + '%' OR @DOCUMENTO. IS NULL)
+	</SQLSERVER>
+				<ORA>
+SELECT COD_MF AS Legajo, NOM_MF AS Nombre, CEDIDE_MF AS Documento
+FROM MAEFUNC2
+WHERE (TO_CHAR(COD_MF) LIKE '%' || @LEGAJO. || '%' OR @LEGAJO. IS NULL)
+AND (UPPER(NOM_MF) LIKE '%' || UPPER(@NOMBRE.) || '%' OR @NOMBRE. IS NULL)
+AND (TRIM(CEDIDE_MF) LIKE '%' || @DOCUMENTO. || '%' OR @DOCUMENTO. IS NULL)
+AND ROWNUM &lt;= 300
+-- 2019
+-- ORDER BY COD_MF
+	</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA>
+			
+						<DATA delimL="@" delimR="." EDATE="31/12/2015" ID="CITI.VAC_SOL.SEL.FER" NAME="Consulta de feriados" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="20151231" ORD="">
+							<DESCRIPTION></DESCRIPTION>
+							<PARAMETERS>
+								<PARAMETER parOrder="1" id="FECHA" parType="111" parTypeName="Date"/>
+							</PARAMETERS>
+							<SQL>
+							SELECT FECHA
+							FROM QSVACFERIADOS      
+							WHERE FECHA=@FECHA.
+							--WHERE EXTRACT(YEAR FROM FECHA)=EXTRACT(YEAR FROM @FECHA.)
+								</SQL>
+							<SQLSERVER>
+							</SQLSERVER>
+							<ORA>
+							</ORA>
+							<INF>
+							</INF>
+							<OUTPUT/>
+							<ACCESSRULES><ACCESSRULE ID="DIAS_FEST"/></ACCESSRULES>
+							<LANG/>
+						</DATA>
+			
+			<DATA delimL="@" delimR="." EDATE="01/01/1900" ID="CITI.VAC_SOL.SUB.KEY" NAME="Trae un registro según la sub key" GROUP="CIT.VAC_SOL" VERSION="1.1" UED="20190901" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+					<PARAMETER parOrder="2" id="PERIODO" parType="111" parTypeName="Date"/>
+					<PARAMETER parOrder="3" id="COD_EMP" parType="4" parTypeName="Integer"/>
+				</PARAMETERS>
+				<SQL>
+
+				SELECT COD_MF, PERIODO, COD_EMP, DIAS_ARRASTRE, DIAS_CALCULADOS,
+							NVL((select SUM(S.DIAS) from cb_vac_sol S
+								WHERE S.COD_MF = A.COD_MF
+								AND S.PERIODO = A.PERIODO
+								), 0)
+							AS DIAS_TOMADOS
+						, MAX_FRAG
+				FROM CB_VAC A
+				WHERE COD_MF = @COD_MF.
+				AND PERIODO = @PERIODO.
+				AND COD_EMP = @COD_EMP.
+				</SQL>
+				<SQLSERVER>
+				</SQLSERVER>
+				<ORA>
+				</ORA>
+				<INF>
+				</INF>
+				<OUTPUT/>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.VIEW"/></ACCESSRULES>
+				<LANG/>
+			</DATA>
+			<LIBRARY EDATE="01/01/1900" ID="CITI.VAC_SOL.LIB" NAME="Librería para Vacaciones" GROUP="CIT.VAC_SOL" UED="20190101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS/>
+				<REFERENCES>
+					<REFERENCE ID="TYPELIB"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+		
+			///
+				function leQuedanDiasDisponibles(DIAS_TOMADOS, DIAS_CALCULADOS){
+					var tieneDiasDisponibles = true;
+					
+					if (DIAS_TOMADOS &gt; DIAS_CALCULADOS){
+						result.setError("ATENCION: Los dias tomados son mayores que los calculados. Se pasan de los que le quedan disponibles");
+						tieneDiasDisponibles = false;
+					}
+					
+					return tieneDiasDisponibles;
+				}
+			
+				function seRepiteLaFechaInicio(fechaInicioValidar, VAC_SOL){
+					var existeElementoDuplicado = false;
+					var cantElementosIguales = 0;
+					for(i=0;i&lt;VAC_SOL.length;i++){
+						if (VAC_SOL[i].FEC_INI == fechaInicioValidar){
+							cantElementosIguales +=1;
+							if(cantElementosIguales &gt; 1){
+								result.setError("La fecha de inicio no puede repetirse. Revisar fila " + (i+1));
+								existeElementoDuplicado = true;
+							}
+						}					
+					}
+					return existeElementoDuplicado;
+				}
+			///
+		
+			function Validaciones(VAC_SOL,COD_MF,PERIODO,COD_EMP){
+				/*result.setError("Comienza el proceso de validaciones");*/
+				if (COD_MF == null || COD_MF == 0){
+					result.setError("El legajo no puede ser 0");
+					return false;
+				}
+				if (PERIODO == null){
+					result.setError("El periodo no puede estar vacío");
+					return false;
+				}
+				if (COD_EMP == null || COD_EMP == 0){
+					result.setError("La empresa no puede ser 0");
+					return false;
+				}
+				
+				
+				
+				for(i=0;i&lt;VAC_SOL.length;i++){
+					if (VAC_SOL[i].bxRowStatus == 'I' || VAC_SOL[i].bxRowStatus == 'U'){
+
+						if (VAC_SOL[i].FEC_PEDIDO == ''){
+							result.setError("La fecha de pedido no puede ser vacía");
+							return false;
+						}		
+						if (VAC_SOL[i].FEC_INI == ''){
+							result.setError("La fecha de inicio no puede ser vacía");
+							return false;
+						}
+						if (VAC_SOL[i].FEC_FIN == ''){
+							result.setError("La fecha de fin no puede ser vacía");
+							return false;
+						}
+						if (VAC_SOL[i].FEC_INI.dateFromService() &gt;= VAC_SOL[i].FEC_FIN.dateFromService()){
+							result.setError("La fecha de inicio no puede ser mayor o igual a la fecha de fin");
+							return false;
+						}
+						if (VAC_SOL[i].DIAS == null || VAC_SOL[i].DIAS &lt;= 0){
+							result.setError("Los dias no pueden ser 0");
+							return false;
+						}
+						if (VAC_SOL[i].MES == null || VAC_SOL[i].MES &lt;= 0 || VAC_SOL[i].MES &gt; 12){
+							result.setError("Mes de imputación incorrecto o en blanco");
+							return false;
+						}			
+						if (VAC_SOL[i].ANIO == null || VAC_SOL[i].ANIO &lt;= 2000 || VAC_SOL[i].ANIO &gt; 2050){
+							result.setError("Año de imputación incorrecto o en blanco");
+							return false;
+						}
+						if(seRepiteLaFechaInicio(VAC_SOL[i].FEC_INI, VAC_SOL)){
+							result.setError("La fecha de inicio no puede repetirse en un mismo Periodo, empresa y legajo de un Empleado.Revisar fila " + (i));
+							return false;
+						}		
+						
+						
+					}
+				}	
+				return true;
+			}
+
+			function SaveVacSolGrid(VAC_SOL,COD_MF,PERIODO,COD_EMP,sesion){
+
+					empowerTypes();
+					
+					for(i=0;i&lt;VAC_SOL.length;i++){
+						switch(VAC_SOL[i].bxRowStatus){
+							case 'I':
+								InsertVacSol(VAC_SOL[i],COD_MF,PERIODO,COD_EMP,sesion);
+								break;
+							case 'U':
+								UpdateVacSol(VAC_SOL[i],COD_MF,PERIODO,COD_EMP,sesion);
+								break;
+							case 'D':
+								DeleteVacSol(VAC_SOL[i],COD_MF,PERIODO,COD_EMP,sesion);
+								break;
+							default:
+								break;				
+						}
+					}
+					
+					//result.setError("Los cambios fueron guardados");
+			}
+
+			function InsertVacSol(VAC_SOLi,COD_MF,PERIODO,COD_EMP,sesion){
+
+					sql = "INSERT INTO CB_VAC_SOL(COD_MF,PERIODO,COD_EMP,FEC_INI,FEC_FIN,DIAS,FEC_PEDIDO,PLUS_VAC,ADE_VAC,MES,ANIO,APROB_VAC,LAST_USR,LAST_HOST) VALUES (";
+					sql += COD_MF.toDB() + ", ";
+					sql += PERIODO.toDB() + ", ";
+					sql += COD_EMP.toDB() + ", ";
+					sql += VAC_SOLi.FEC_INI.dateFromService().toDB() + ", ";
+					sql += VAC_SOLi.FEC_FIN.dateFromService().toDB() + ", ";
+					sql += VAC_SOLi.DIAS.toInt().toDB() + ", ";
+					sql += VAC_SOLi.FEC_PEDIDO.dateFromService().toDB() + ", ";
+					sql += VAC_SOLi.PLUS_VAC.toDB() + ", ";
+					sql += VAC_SOLi.ADE_VAC.toDB() + ", ";
+					sql += VAC_SOLi.MES.toInt().toDB() + ", ";
+					sql += VAC_SOLi.ANIO.toInt().toDB() + ", ";
+					sql += VAC_SOLi.APROB_VAC.toDB() + ", ";
+					sql += sesion.USR.toDB() + ", ";
+					sql += sesion.NAMEHOST.toDB() + ") ";
+
+					engine.con.Execute(sql);
+
+			}
+
+			function UpdateVacSol(VAC_SOLi,COD_MF,PERIODO,COD_EMP,sesion){
+
+					var sql = "UPDATE CB_VAC_SOL SET ";
+					sql += "FEC_INI = " + VAC_SOLi.FEC_INI.dateFromService().toDB() + ", ";
+					sql += "FEC_FIN = " + VAC_SOLi.FEC_FIN.dateFromService().toDB() + ", ";
+					sql += "DIAS = " + VAC_SOLi.DIAS.toInt().toDB() + ", ";
+					sql += "FEC_PEDIDO = " + VAC_SOLi.FEC_PEDIDO.dateFromService().toDB() + ", ";
+					sql += "PLUS_VAC = " + VAC_SOLi.PLUS_VAC.toDB() + ", ";
+					sql += "ADE_VAC = " + VAC_SOLi.ADE_VAC.toDB() + ", ";
+					sql += "MES = " + VAC_SOLi.MES.toInt().toDB() + ", ";
+					sql += "ANIO = " + VAC_SOLi.ANIO.toInt().toDB() + ", ";
+					sql += "APROB_VAC = " + VAC_SOLi.APROB_VAC.toDB() + ", ";
+					sql += "LAST_USR = " + sesion.USR.toDB() + ", ";
+					sql += "LAST_HOST = " + sesion.NAMEHOST.toDB() + " ";
+					sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+					sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+					sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+					sql += "AND FEC_INI = " + VAC_SOLi.bxSelVal_FEC_INI.dateFromService().toDB();
+
+					engine.con.Execute(sql);
+					
+			}
+
+			function DeleteVacSol(VAC_SOL,COD_MF,PERIODO,COD_EMP,sesion){
+
+					sql = "INSERT INTO A_CB_VAC_SOL(QS_A_FECHA, QS_A_USUARIO, QS_A_HOST, QS_A_ACCION, COD_MF,PERIODO,COD_EMP,FEC_INI,FEC_FIN,DIAS,FEC_PEDIDO,PLUS_VAC,ADE_VAC,MES,ANIO,APROB_VAC) ";
+					sql += "SELECT SYSDATE, ";
+					sql += sesion.USR.toDB() + ", ";
+					sql += sesion.NAMEHOST.toDB() + ", ";
+					sql += "'D', ";
+					sql += "COD_MF,PERIODO,COD_EMP,FEC_INI,FEC_FIN,DIAS,FEC_PEDIDO,PLUS_VAC,ADE_VAC,MES,ANIO,APROB_VAC ";
+					sql += "FROM CB_VAC_SOL ";
+					sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+					sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+					sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+					sql += "AND FEC_INI = " + VAC_SOL.bxSelVal_FEC_INI.dateFromService().toDB();
+					
+					engine.con.Execute(sql); 
+					
+					var sql = "DELETE FROM CB_VAC_SOL "
+					sql += "WHERE COD_MF = " + COD_MF.toDB() + " ";
+					sql += "AND PERIODO = " + PERIODO.toDB() + " ";
+					sql += "AND COD_EMP = " + COD_EMP.toDB() + " ";
+					sql += "AND FEC_INI = " + VAC_SOL.bxSelVal_FEC_INI.dateFromService().toDB();
+					
+					engine.con.Execute(sql); 
+
+			}
+				</CODE>
+				<ACCESSRULES/>
+			</LIBRARY>
+			<SCRIPT EDATE="01/01/1900" ID="CITI.VAC_SOL.INS" NAME="Insercion de Vacaciones" GROUP="CIT.VAC_SOL" UED="20190101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+					<PARAMETER parOrder="2" id="PERIODO" parType="111" parTypeName="Date"/>
+					<PARAMETER parOrder="3" id="COD_EMP" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="4" id="DIAS_ARRASTRE" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="5" id="DIAS_CALCULADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="6" id="DIAS_TOMADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="7" id="MAX_FRAG" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="8" id="VAC_SOL" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="9" id="BXTOKEN" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<REFERENCES>
+					<REFERENCE ID="TYPELIB"/>
+					<REFERENCE ID="CITI.VAC_SOL.LIB"/>
+					<REFERENCE ID="JSON"/>
+					<REFERENCE ID="CITI.COMUN"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+					empowerTypes();
+
+					var COD_MF = service.getParameter('COD_MF').toInt();
+					var PERIODO = service.getParameter('PERIODO').parseDate();
+					var COD_EMP = service.getParameter('COD_EMP').toInt();
+					var DIAS_ARRASTRE = service.getParameter('DIAS_ARRASTRE').toInt();
+					var DIAS_CALCULADOS = service.getParameter('DIAS_CALCULADOS').toInt();
+					var DIAS_TOMADOS = service.getParameter('DIAS_TOMADOS').toInt();
+					var MAX_FRAG = service.getParameter('MAX_FRAG').toInt();   
+					var VAC_SOL = JSON.parse(service.getParameter('VAC_SOL'));  
+					var BXTOKEN = service.getParameter('BXTOKEN');
+
+					if(leQuedanDiasDisponibles(DIAS_TOMADOS, DIAS_CALCULADOS)){
+						if (Validaciones(VAC_SOL,COD_MF,PERIODO,COD_EMP)){
+
+							var ses = GetSessionData(BXTOKEN);
+							
+							engine.con.BeginTrans; 
+							
+							var sql = "INSERT INTO CB_VAC (COD_MF, PERIODO, COD_EMP, DIAS_ARRASTRE, DIAS_CALCULADOS, DIAS_TOMADOS, MAX_FRAG, LAST_USR, LAST_HOST) VALUES(";
+							sql += COD_MF.toDB() + ", ";
+							sql += PERIODO.toDB() + ", ";
+							sql += COD_EMP.toDB() + ", ";
+							sql += DIAS_ARRASTRE.toDB() + ", ";
+							sql += DIAS_CALCULADOS.toDB() + ", ";
+							sql += DIAS_TOMADOS.toDB() + ", ";
+							sql += MAX_FRAG.toDB() + ", ";
+							sql += ses.USR.toDB() + ", ";
+							sql += ses.NAMEHOST.toDB() + ") ";
+							
+							engine.con.Execute(sql);
+							
+							SaveVacSolGrid(VAC_SOL,COD_MF,PERIODO,COD_EMP,ses);
+							
+							engine.con.CommitTrans;
+						}
+					}
+					</CODE>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.UPD"/></ACCESSRULES>
+			</SCRIPT>
+			<SCRIPT EDATE="01/01/1900" ID="CITI.VAC_SOL.UPD" NAME="Actualizacion de Vacaciones" GROUP="CIT.VAC_SOL" UED="20190101" ORD="">
+				<DESCRIPTION></DESCRIPTION>
+				<PARAMETERS>
+					<PARAMETER parOrder="1" id="COD_MF" parType="3" parTypeName="Decimal"/>
+					<PARAMETER parOrder="2" id="PERIODO" parType="111" parTypeName="Date"/>
+					<PARAMETER parOrder="3" id="COD_EMP" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="4" id="DIAS_ARRASTRE" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="5" id="DIAS_CALCULADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="6" id="DIAS_TOMADOS" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="7" id="MAX_FRAG" parType="4" parTypeName="Integer"/>
+					<PARAMETER parOrder="8" id="VAC_SOL" parType="1" parTypeName="String"/>
+					<PARAMETER parOrder="9" id="BXTOKEN" parType="1" parTypeName="String"/>
+				</PARAMETERS>
+				<REFERENCES>
+					<REFERENCE ID="JSON"/>
+					<REFERENCE ID="TYPELIB"/>
+					<REFERENCE ID="CITI.VAC_SOL.LIB"/>
+					<REFERENCE ID="CITI.COMUN"/>
+				</REFERENCES>
+				<CODE LANG="JavaScript">
+					empowerTypes();
+
+					var COD_MF = service.getParameter('COD_MF').toInt();
+					var PERIODO = service.getParameter('PERIODO').parseDate();
+					var COD_EMP = service.getParameter('COD_EMP').toInt();
+					var DIAS_ARRASTRE = service.getParameter('DIAS_ARRASTRE').toInt();
+					var DIAS_CALCULADOS = service.getParameter('DIAS_CALCULADOS').toInt();
+					var DIAS_TOMADOS = service.getParameter('DIAS_TOMADOS').toInt();
+					var MAX_FRAG = service.getParameter('MAX_FRAG').toInt();   
+					var VAC_SOL = JSON.parse(service.getParameter('VAC_SOL'));  
+					var BXTOKEN = service.getParameter('BXTOKEN');
+					
+					if(leQuedanDiasDisponibles(DIAS_TOMADOS, DIAS_CALCULADOS)){
+						if (Validaciones(VAC_SOL,COD_MF,PERIODO,COD_EMP)){
+
+							var ses = GetSessionData(BXTOKEN);
+
+							engine.con.BeginTrans; 
+							
+							var sql = 'UPDATE CB_VAC ';
+							sql += 'SET DIAS_ARRASTRE = ' + DIAS_ARRASTRE.toDB() + ' , ';
+							sql += 'DIAS_CALCULADOS = ' + DIAS_CALCULADOS.toDB() + ' , ';
+							sql += 'DIAS_TOMADOS = ' + DIAS_TOMADOS.toDB() + ' , ';
+							sql += 'MAX_FRAG = ' + MAX_FRAG.toDB() + ', ';
+							sql += 'LAST_USR = ' + ses.USR.toDB() + ', ';
+							sql += 'LAST_HOST = ' + ses.NAMEHOST.toDB() + ' ';
+							sql += 'WHERE COD_MF = ' + COD_MF.toDB() + ' ';
+							sql += 'AND PERIODO = ' + PERIODO.toDB() + ' ';
+							sql += 'AND COD_EMP = ' + COD_EMP.toDB() + ' ';
+							
+							engine.con.Execute(sql);
+							
+							SaveVacSolGrid(VAC_SOL,COD_MF,PERIODO,COD_EMP,ses);
+							
+							engine.con.CommitTrans;
+						}
+					}
+				</CODE>
+				<ACCESSRULES><ACCESSRULE ID="VAC_SOL.UPD"/></ACCESSRULES>
+			</SCRIPT>
+		</MENU></GROUP></SERVICES>
