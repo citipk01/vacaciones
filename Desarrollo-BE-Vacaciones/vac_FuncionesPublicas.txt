@@ -4,25 +4,33 @@ const nombre_btnGuardarEnBD = "btnGuardarEnBD"
 const nombreControl_DeshacerCambios 		= "btnDB_DeshacerCambiosGrilla"
 const nombreControl_frmGestionImportacion 	= "frmGestionImportacion"
 const formatDateDB = "DD/MM/YYYY"
+const formatoFechaDB = "DD/MM/YYYY"
+
 
 const is_PENDIENTE_validacion	= 0
 const is_ERROR_NoIgnorable		= 1
 const is_ADVERTENCIA_Ignorable	= 2
 const is_OK_Aprobado			= 3
+const is_OK_RegistradoEnDB		= 4
+const is_OK_RegistradoEnDB_Adv	= 5
 
+		cantErrores_Grilla 		= 0
+		cantAdvertencias_Grilla = 0
+		cantOKAprobado_Grilla 	= 0
+		cantOKDB_Grilla 		= 0
 '' UTILITARIO ══════════════════════════════════════════════════════════════════════════════════════════════════════════''
 	public function  getDateAsString 
-		formatDate = "yyyy-MM-dd HH:mm" 'MM/dd/yyyy'
+		formatoFecha = "yyyy-MM-dd HH:mm" 'MM/dd/yyyy'
 		stringDate = ""
 		'stringDate = Format(Now, 		formatDate)
 		'stringDate = Format(Date, 		formatDate)
-		stringDate = Format(CStr(Now), 	formatDate)     
+		stringDate = Format(CStr(Now), 	formatoFecha)     
 		getDateAsString = stringDate
 	end function
 
 
 	public function  getBooleanValue (integerValue) 
-		if integerValue <> 0 then
+		if integerValue <> 0 or integerValue > 0 then
 				getBooleanValue = true
 			else
 				getBooleanValue = false
@@ -76,6 +84,7 @@ const is_OK_Aprobado			= 3
 	const msg_Error 	= 3
 	const msg_Question	= 4
 	const msg_Input 	= 5
+	const msg_DB 		= 6
 
 	public function  msg_onWindow (mensaje, tipo)
 		mensajeTitulo = "Aviso-Carga de Vacaciones"'""
@@ -132,7 +141,8 @@ const is_OK_Aprobado			= 3
 			case msg_Info
 				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(15, 130, 180) ''20, 160, 250
 			case msg_Warn
-				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(250, 160, 0)''rgb(225, 200, 70)
+				''obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(250, 160, 0)''rgb(225, 200, 70)
+				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(100, 80, 0)''rgb(225, 200, 70)
 			case msg_Error
 				obj.controles(nombreControl_MostrarMensaje).ColorTexto = rgb(200, 70, 55)
 			case msg_Question
@@ -162,7 +172,12 @@ const is_OK_Aprobado			= 3
 		obj.controles("flt_chkSoloCargaMasiva").Valor 	= 1
 		obj.controles("flt_chkBuscarPorSoeid").Valor 	= 1
 		obj.controles("flt_chkBuscarPorSoeid").setFoco()
-		 
+
+
+		''screenwidth = Screen.Width \ Screen.TwipsPerPixelX
+		''screenheight = Screen.Height \ Screen.TwipsPerPixelY
+		mensaje = "Bienvenido!" &vbNewLine&vbNewLine& "Si desea guardar las observaciones de la importación, recuerde cerrar el archivo Excel antes de subirlo. Gracias!"
+		msg_onFormControl mensaje, msg_Info
 
 	end sub
 
@@ -181,11 +196,16 @@ const is_OK_Aprobado			= 3
 			case msg_Info
 				color = rgb(15, 130, 180) ''20, 160, 250
 			case msg_Warn
-				color = rgb(250, 160, 0)''rgb(225, 200, 70)
+				color = rgb(100, 80, 0)''rgb(82, 67, 0)''rgb(250, 160, 0)''rgb(225, 200, 70)
 			case msg_Error
 				color = rgb(200, 70, 55)
 			case msg_Question
 				color = rgb(190, 100, 180)
+			case msg_DB
+				color = rgb(40, 150, 140)
+			case msg_DB_Update
+				color = rgb(20, 120, 120)
+				
 		end select
 		obj.Controles(nombreGrilla).refControl.Cell(7, (nroFila),0,(nroFila),cantColumnasGrilla) = color
 	end function
@@ -276,6 +296,7 @@ const is_OK_Aprobado			= 3
 
 		FOR i=0 TO (cantFilasGrilla - 1)
 			huboErroresValidacion = false
+			huboErroresValidacionAdvertencia = false
 			'0) Obtiene las fechas de la grilla de previsualización'
 				col_COD_MF		= obj.controles(nombreGrilla).ValorCelda("col_COD_MF" , i)		
 				col_PERIODO		= obj.controles(nombreGrilla).ValorCelda("col_PERIODO", i)		
@@ -330,7 +351,9 @@ const is_OK_Aprobado			= 3
 				end if 
 
 			'2) Verifica que exista un registro en la tabla de cabecera CB_VAC'
-				if not existeRelacionLegajoPeriodo_CB_VAC(col_COD_MF, col_PERIODO) then 
+				obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i) = getCodEmpresa(col_COD_MF)
+				col_COD_EMP		= obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i)
+				if not existeRelacionLegajoPeriodo_CB_VAC(col_COD_MF, col_PERIODO, col_COD_EMP) then 
 					msgObservacion = "Error: No se generaron los días calculados para este periodo: " & col_PERIODO & "   -Revisar existencia de registro en CB_VAC"
 					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
 					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ERROR_NoIgnorable
@@ -365,6 +388,8 @@ const is_OK_Aprobado			= 3
 				end if
 
 			'4) Verifica que no se haya superado la fragmentación de las vacaciones'
+
+
 				saldoDeFragmentacion	= getFromDB_saldoDeFragmentacionDisponible(col_COD_MF, col_PERIODO)
 				''mensaje = "MAX_FRAG: " & saldoDeFragmentacion & " - cantSol: "&total_cantSolicitudes_EmpleadoPeriodo
 				''msg_onWindow mensaje, msg_Info
@@ -373,18 +398,30 @@ const is_OK_Aprobado			= 3
 					msgObservacion = "Atención: Las vacaciones solicitadas están superando el máximo de fragmentaciones disponibles : " & saldoDeFragmentacion
 					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
 					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
-					huboErroresValidacion = true
+					huboErroresValidacionAdvertencia = true
 				end if 
 
 			'5) Realiza el cálculo de días que se están solicitando y descuenta el saldo disponible (No en la DB)'
+				'5.0) Avisar que las vacaciones comienzan a futuro del mes de pago'
+				cantDiferenciaDeMeses = DateDiff("m", getDateAsString, col_FEC_INI)
+				if cantDiferenciaDeMeses <> 0 and huboErroresValidacion=false then
+					if cantDiferenciaDeMeses > 0 then 
+						msgObservacion = "Atención: Se están solicitando vacaciones que no comienzan en el mes corriente de pago (Son anteriores o posteriores a futuro)"
+						msgObservacion = "Atención: Se están solicitando vacaciones que no corresponden al mes corriente de pago. " & cantDiferenciaDeMeses ''& col_FEC_INI
+						obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+						obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
+						huboErroresValidacionAdvertencia = true
+					end if
+				end if
+
 				'5.1) Verifica si quedan días pendientes en el periodo anterior o si los está solicitando en esta importación de Excel'
 				periodoAnterior = DateAdd("yyyy", -1, col_PERIODO) 
 				cantDiasDisponiblesAnterior = getFromDB_cantDiasDisponibles(col_COD_MF, periodoAnterior)
-				if cantDiasDisponiblesAnterior > 0 and completoCantDiasPeriodoAnterior = false AND huboErroresValidacion=false then 
-					msgObservacion = "Atención: Aún quedan días pendientes de goce del periodo anterior: " & periodoAnterior
-					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
-					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
-					huboErroresValidacion = true
+				if cantDiasDisponiblesAnterior > 0 and completoCantDiasPeriodoAnterior = false AND huboErroresValidacion=false AND not huboErroresValidacionAdvertencia then 
+						msgObservacion = "Atención: Aún quedan días pendientes de goce del periodo anterior: " & periodoAnterior
+						obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+						obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
+						huboErroresValidacionAdvertencia = true
 				end if
 
 				'5.2) Obtiene el saldo de la cant días disponibles para tomarse'
@@ -396,7 +433,7 @@ const is_OK_Aprobado			= 3
 					completoCantDiasPeriodoAnterior = true
 				end if
 
-				if (total_cantDiasSolicitadosPorLegajo > cantDiasDisponibles)  AND huboErroresValidacion=false then 
+				if (total_cantDiasSolicitadosPorLegajo > cantDiasDisponibles)  AND huboErroresValidacion=false  then 
 					msgObservacion = "Error: Se está superando la toma de los días disponibles para el periodo : " & col_PERIODO 
 					msgObservacion = msgObservacion & vbNewLine & " cantDías Disponibles: " & cantDiasDisponibles & " - cant Solicitada: " & total_cantDiasSolicitadosPorLegajo
 					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
@@ -405,23 +442,24 @@ const is_OK_Aprobado			= 3
 				end if
 
 
-				if  laFechaCaeUnLunes(col_FEC_INI) =false  AND huboErroresValidacion=false then 
+				if  laFechaCaeUnLunes(col_FEC_INI) =false  AND huboErroresValidacion=false AND not huboErroresValidacionAdvertencia then 
 					msgObservacion = "Atención: Las vacaciones comienzan un " & getNombreDiaFecha(col_FEC_INI) & " en vez de Lunes. Revise la fecha de inicio " & col_FEC_INI
 					''msgObservacion = msgObservacion  & vbNewLine & "CaeLunes: "& laFechaCaeUnLunes(col_FEC_INI) & "huboErroresValidacion: " & huboErroresValidacion
 					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
-					huboErroresValidacion = true
+					huboErroresValidacionAdvertencia = true
 					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
 				end if
 
 				
 
 			'Informar resultados de cada fila de la grilla que fue procesada'
-				if not huboErroresValidacion then
+
+				if not huboErroresValidacion AND not huboErroresValidacionAdvertencia then
 						msgObservacion = "OK"''"OK: Validación de fechas solicitadas"
-						obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i) = getCodEmpresa(col_COD_MF)
+						''obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i) = getCodEmpresa(col_COD_MF)
 						obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
 						obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_OK_Aprobado
-						pintarFila i+1, msg_OK
+						pintarFila i+1, msg_Info
 						''cantErroresEncontrados = 0
 					else
 						col_EstadoImportacion = obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
@@ -429,7 +467,7 @@ const is_OK_Aprobado			= 3
 								pintarFilaDeRojo(i+1)
 							else
 								if cint(col_EstadoImportacion) = is_ADVERTENCIA_Ignorable then
-									pintarFila i+1, msg_Info
+									pintarFila i+1, msg_Warn
 								end if 
 						end if 
 						cantErroresEncontrados = cantErroresEncontrados + 1 
@@ -483,13 +521,14 @@ const is_OK_Aprobado			= 3
 	 	getFromDB_cantDiasDisponibles = cantDiasDisponibles
 	end function
 
-	public function existeRelacionLegajoPeriodo_CB_VAC(col_COD_MF, col_PERIODO)
+	public function existeRelacionLegajoPeriodo_CB_VAC(col_COD_MF, col_PERIODO, col_COD_EMP)
 		const formatDateDB = "DD/MM/YYYY"
 		tieneRegistrosCabecera = false
 
 		query =	" SELECT COUNT(*) FROM CB_VAC "&_
 				" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
-				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatDateDB&"')"
+				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatDateDB&"')" &_
+				" AND COD_EMP = " 			& col_COD_EMP 
 
 		''msg_onWindow query, msg_Input
 		Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
@@ -628,7 +667,10 @@ const is_OK_Aprobado			= 3
 
 
 		haySuperposicion = false
-
+		
+		if col_FEC_INI = col_FEC_INI_Ant then
+	    		haySuperposicion = true
+	    end If  
 	    if col_FEC_INI >= col_FEC_INI_Ant and col_FEC_INI <= col_FEC_FIN_Ant then
 	    		haySuperposicion = true
 	    end If  
@@ -724,6 +766,111 @@ const is_OK_Aprobado			= 3
 		next
 	end function
 
+	private function mostrarDetalleReporte(habilitarControles)
+		nombreControl_Contenedor		 =	"frm_RepDetalleSolVac"
+		nombreControl_MostrarDetalle	 =	"txtReporteDetalleSolVac"
+		if habilitarControles then 
+		obj.controles(nombreControl_Contenedor).Habilitado = true
+		obj.controles(nombreControl_MostrarDetalle).Habilitado = true
+		obj.controles(nombreControl_Contenedor).Visible = true
+		obj.controles(nombreControl_MostrarDetalle).Visible = true
+		obj.controles(nombreControl_MostrarDetalle).Texto 	= ""
+		obj.controles(nombreControl_MostrarDetalle).refControl.Font.Size 	= 10
+		obj.controles(nombreControl_MostrarDetalle).refControl.Font.Bold 	= true
+		obj.controles(nombreControl_MostrarDetalle).refControl.Appearance 	= 0
+		obj.controles(nombreControl_MostrarDetalle).refControl.BorderStyle 	= 0 
+
+		mensaje = 	"Periodo			"&vbNewLine&_
+					"Empresa:           "&vbNewLine&_
+					"Legajo:	  		"&vbNewLine&_
+					"Fragmentación Max:	"&vbNewLine&_
+					"Días Arrastre:		"&vbNewLine&_
+					"Días Calculados:	"&vbNewLine&_
+					"Días Totales:		"&vbNewLine&_
+					"Días Tomados:		"&vbNewLine&_
+					"Días Restantes:	"
+			obj.controles(nombreControl_MostrarDetalle).Texto 	= mensaje
+			
+		else
+			obj.controles(nombreControl_Contenedor).Habilitado = false
+			obj.controles(nombreControl_Contenedor).Visible = false
+			obj.controles(nombreControl_MostrarDetalle).Habilitado = false
+			obj.controles(nombreControl_MostrarDetalle).Visible = false
+		end if 
+	end function
+
+	public function grdReporte_VacacionesSol_OnSelectedCell
+		filaSeleccionada = obj.controles(nombreGrillaReporte).fila
+		col_COD_MF		= obj.controles(nombreGrillaReporte).ValorCelda("col_COD_MF" , filaSeleccionada)		
+		col_PERIODO		= obj.controles(nombreGrillaReporte).ValorCelda("col_PERIODO", filaSeleccionada)		
+		col_COD_EMP		= obj.controles(nombreGrillaReporte).ValorCelda("col_COD_EMP", filaSeleccionada)
+		if col_PERIODO = "" then	
+			mostrarDetalleReporte(false)	
+			exit function
+		end if 
+		col_PERIODO		= CDate(Format(CStr(col_PERIODO), formatDateDB))
+		''col_COD_MF 		= LeftPadZeros(col_COD_MF)
+
+		mostrarDetalleReporte(true)
+
+		query = "SELECT V.COD_MF, V.PERIODO, V.LAST_USR, V.LAST_HOST"	&_
+				"     , V.DIAS_ARRASTRE, V.DIAS_CALCULADOS "	&_
+				"     ,(V.DIAS_ARRASTRE + V.DIAS_CALCULADOS) AS DIAS_TOTALES"	&_
+				"     , V.MAX_FRAG, V.DIAS_TOMADOS"	&_
+				"     , ((V.DIAS_ARRASTRE + V.DIAS_CALCULADOS) - V.DIAS_TOMADOS) AS DIAS_RESTANTES"	&_
+				"     , ((V.DIAS_ARRASTRE + V.DIAS_CALCULADOS) - S.DIAS_SOLICITADOS) AS DIAS_RESTANTES_SOL"	&_
+				"     , S.DIAS_SOLICITADOS "	&_
+				" FROM CB_VAC V, ("	&_
+				"       select S.COD_MF, S.PERIODO, SUM(S.DIAS) AS DIAS_SOLICITADOS "	&_
+				"         	from cb_vac_sol S		"	&_
+				"  			WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+				"  			AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+				"       GROUP BY S.COD_MF, S.PERIODO"	&_
+				"     ) S"	&_
+				" WHERE S.COD_MF = V.COD_MF"	&_
+				" AND S.PERIODO = V.PERIODO"	&_
+				" /*AND V.DIAS_TOMADOS <> S.DIAS"	&_
+				" AND V.DIAS_CALCULADOS >= S.DIAS"	&_
+				" AND V.DIAS_TOMADOS = 0*/"	&_
+				" AND V.COD_EMP IN (1, 3, 15)"	&_
+				" ORDER BY V.PERIODO DESC"	
+		''msg_onWindow query, msg_Input
+	    Set rs = obj.Conexion.OpenResultset(query , rdOpenForwardOnly)
+
+	    nroFilasLeidas = 0
+	    WHILE NOT rs.EOF
+
+			dbDIAS_ARRASTRE		= rs.rdoColumns("DIAS_ARRASTRE").Value
+			dbDIAS_CALCULADOS	= rs.rdoColumns("DIAS_CALCULADOS").Value
+			dbDIAS_TOTALES		= rs.rdoColumns("DIAS_TOTALES").Value
+			dbMAX_FRAG			= rs.rdoColumns("MAX_FRAG").Value
+			dbDIAS_TOMADOS		= rs.rdoColumns("DIAS_TOMADOS").Value
+			dbDIAS_RESTANTES	= rs.rdoColumns("DIAS_RESTANTES").Value
+			dbDIAS_RESTANTES_SOL= rs.rdoColumns("DIAS_RESTANTES_SOL").Value
+			dbDIAS_SOLICITADOS	= rs.rdoColumns("DIAS_SOLICITADOS").Value
+
+
+			mensaje = 	"Días Arrastre 	: "			& dbDIAS_ARRASTRE		&vbNewLine&_
+						"Días Calculados	: "		& dbDIAS_CALCULADOS		&vbNewLine&_
+						"Días Totales	: "			& dbDIAS_TOTALES		&vbNewLine&_
+						"Días Tomados	: "			& dbDIAS_SOLICITADOS	&vbNewLine&_
+						"Días Restantes	: "			& dbDIAS_RESTANTES_SOL	&vbNewLine&vbNewLine&_
+						"Legajo	: "					& col_COD_MF	&vbNewLine&_
+						"Periodo	: "				& col_PERIODO 	&vbNewLine&_
+						"Empresa	: "				& col_COD_EMP	&vbNewLine&_
+						"Fragmentación Max	: "		& dbMAX_FRAG	&vbNewLine''&_
+			obj.controles("txtReporteDetalleSolVac").Texto 	= mensaje
+			
+
+			nroFilasLeidas = nroFilasLeidas +1			
+			rs.MoveNext
+		WEND
+		rs.close
+
+
+
+	end function
+
 	public function grdPreviExcel_Vacaciones_OnSelectedCell
 		filaSeleccionada = obj.controles(nombreGrilla).fila
 		mensaje =  obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", filaSeleccionada)
@@ -740,7 +887,10 @@ const is_OK_Aprobado			= 3
 				msg_onFormControl  mensaje, msg_Error
 			
 			case is_ADVERTENCIA_Ignorable
-				msg_onFormControl  mensaje, msg_Info
+				msg_onFormControl  mensaje, msg_Warn
+
+			case is_OK_RegistradoEnDB, is_OK_RegistradoEnDB_Adv
+				msg_onFormControl  mensaje, msg_OK
 			
 		end select
 	end function
@@ -781,7 +931,55 @@ const is_OK_Aprobado			= 3
 	    msg_onFormControl	mensaje, msg_Question 
 	end function
 
-	public function habilitarImportacionSiNoHayErroresEnEnLaGrilla
+
+	public function actualizarEInformarCantErroresEnLaGrilla
+		''hayErroresOAdvertenciasEnEnLaGrilla
+		cantErrores_Grilla = 0
+		cantAdvertencias_Grilla = 0
+		cantAdvertenciasMarcadas_Grilla = 0
+		cantOKAprobado_Grilla = 0
+
+		cantFilasGrilla = obj.controles(nombreGrilla).filas
+		for i=0 TO (cantFilasGrilla - 1)
+
+			col_EstadoImportacion = obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+			col_IgnorarError 	  = obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", i)
+			if isnull(col_EstadoImportacion) OR col_EstadoImportacion="" then 
+					col_EstadoImportacion = 0
+				else
+					col_EstadoImportacion = cInt(col_EstadoImportacion)
+			end if
+
+			select case col_EstadoImportacion
+				case is_ERROR_NoIgnorable
+					cantErrores_Grilla 		= cantErrores_Grilla + 1
+				
+				case is_ADVERTENCIA_Ignorable
+					cantAdvertencias_Grilla	= cantAdvertencias_Grilla + 1
+					if col_IgnorarError <> 0 then
+						cantAdvertenciasMarcadas_Grilla = cantAdvertenciasMarcadas_Grilla + 1
+					end if
+
+				case is_OK_Aprobado
+					cantOKAprobado_Grilla	= cantOKAprobado_Grilla + 1
+				
+				case is_OK_RegistradoEnDB
+					cantOKDB_Grilla 		= cantOKDB_Grilla + 1
+			end select
+		next
+
+		mensaje = mensaje & vbNewLine & "Cant Total:		" & cantFilasGrilla
+		mensaje = mensaje & vbNewLine & "Cant Aprobada:		" & cantOKAprobado_Grilla
+		mensaje = mensaje & vbNewLine & "Cant Advertencias:		" & cantAdvertencias_Grilla
+		mensaje = mensaje & vbNewLine & "Cant Adv.Marcadas:		" & cantAdvertenciasMarcadas_Grilla
+		mensaje = mensaje & vbNewLine & "Cant Errores:		" & cantErrores_Grilla
+
+		msg_onFormControl	mensaje, msg_Info
+
+	end function
+
+
+	public function habilitarImportacionSiNoHayErroresEnLaGrilla
 		''hayErroresOAdvertenciasEnEnLaGrilla
 		cantErrores_Grilla = 0
 		cantAdvertencias_Grilla = 0
@@ -831,6 +1029,38 @@ const is_OK_Aprobado			= 3
 	end function
 
 
+	public function btnIgnorarAdvertencias_ACTION
+		cantFilasGrilla = obj.controles(nombreGrilla).filas
+		esLaPrimerAdvertencia = true
+		nuevoEstadoAdvertencia= false
+
+		for i=0 TO (cantFilasGrilla - 1)
+			col_EstadoImportacion = obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+			if isnull(col_EstadoImportacion) OR col_EstadoImportacion="" then 
+				exit function
+			end if
+
+
+			col_EstadoImportacion	= Cint(col_EstadoImportacion)
+			col_IgnorarError 		= obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", i) 
+
+			if col_EstadoImportacion = is_ADVERTENCIA_Ignorable then
+				if esLaPrimerAdvertencia then
+					esLaPrimerAdvertencia = false
+					if getBooleanValue(col_IgnorarError) = true then
+						nuevoEstadoAdvertencia = false
+						else
+						nuevoEstadoAdvertencia = true
+					end if 
+				end if 
+
+				obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", i) = nuevoEstadoAdvertencia
+			end if 
+		next
+	end function
+
+
+
 	public function getTextoSeparadoPorComaYComilla(textoSeparadoPorComa)
 		textoSeparadoPorComaComilla = ""
 		'1) Agregar comillas entre las comas (si existen) y quitar todos los espacios
@@ -855,6 +1085,13 @@ const is_OK_Aprobado			= 3
 		end if
 		obj.Controles("lblNroLegajo").Texto = mensaje
 	end function
+
+	public function txtArchivoXLS_OnClick
+		rutaDelArchivoYNombre = obj.controles("txtArchivoXLS").texto
+		mensaje = rutaDelArchivoYNombre
+		msg_onFormControl mensaje, msg_Info
+	end function
+
 
 ''**********************************************************************************************************************************************************************************************************''
 ''**********************************************************************************************************************************************************************************************************''
@@ -1193,7 +1430,15 @@ public sub btnSubirExcel_Action
 	''----------------------------------------------------------------------------------------------------------------''
 	''----------------------------------------------------------------------------------------------------------------''
 	mensaje = ""
-	msgCantFilasLeidas = "Cantidad de filas leídas: " & (nroFila -  2) & vbNewLine 
+	cantFilasLeidas = (nroFila -  2)
+	msgCantFilasLeidas = "Cantidad de filas leídas: " & cantFilasLeidas & vbNewLine 
+	if cantFilasLeidas <= 0 then
+		mensaje =	"Recuerde que para realizar la importación de un archivo Excel, es necesario completar todas las columnas con el formato correspondiente"
+		mensaje =  	mensaje & vbNewLine & vbNewLine & msgCantFilasLeidas
+		msg_onFormControl	mensaje, msg_Error
+		exit sub
+	end if 
+
 
 	IF cantErroresEncontrados > 0 THEN
 		mostrarMensajeErrorGral cantErroresEncontrados, "Error - Formato de Datos Excel"
@@ -1216,7 +1461,7 @@ public sub btnSubirExcel_Action
 	    	''mensaje = "Se encontraron errores en las fechas solicitadas. Por favor, revise la columna Observaciones para obtener más detalles"
 			''mostrarMensajeErrorGral cantErroresEncontrados, "Error - Validación de Datos"
 			informarErroresEnExcel
-	       	habilitarImportacionSiNoHayErroresEnEnLaGrilla
+	       	habilitarImportacionSiNoHayErroresEnLaGrilla
 	       	exit sub
 		end if
 
@@ -1289,7 +1534,9 @@ end sub
 					"         WHERE mf.COD_MF = vs.COD_MF) AS NOM_MF " &_
 					"   , s.SOEID AS SOEID " &_
 					" FROM CB_VAC_SOL vs, CB_SOEID s " &_
-					" WHERE s.COD_MF = vs.COD_MF " 
+					" WHERE s.COD_MF = vs.COD_MF " &_
+					" AND  	vs.COD_EMP NOT IN (123, 222, 333, 443) " 
+
 
 
 		esElPrimerFiltro = false
@@ -1567,9 +1814,7 @@ public sub  btnDB_GuardarEnBD_ACTION
 
 End Sub
 
-
-
-public sub  btnDB_GuardarEnBD_ACTION
+public sub  btnDB_GuardarEnBD_ACTION_IgnorarAdvertencias
 
 	''nombreGrilla 	= "grdPreviExcel_Vacaciones"
 	const formatoFechaDB = "DD/MM/YYYY"
@@ -1590,9 +1835,88 @@ public sub  btnDB_GuardarEnBD_ACTION
 			obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
 			exit sub		
 	  ELSE
-			FOR i=0 TO (cantFilasGrilla - 1)
 
+
+	  		actualizarEInformarCantErroresEnLaGrilla
+
+	  		cantFilasRegistradas_DB = 0
+	  		cantFilasRegistradasIgnorandoError_DB = 0
+
+			FOR i=0 TO (cantFilasGrilla - 1)
+				seGuardoEnDB = dbInsert(i)
+				if seGuardoEnDB then 
+					cantFilasRegistradas_DB = cantFilasRegistradas_DB + 1
+
+					col_IgnorarError 		= obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", i) 
+					col_EstadoImportacion 	= obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+					col_EstadoImportacion	= Cint(col_EstadoImportacion)
+					if Cint(col_EstadoImportacion) = is_OK_RegistradoEnDB_Adv and getBooleanValue(col_IgnorarError) <> false then 
+						cantFilasRegistradasIgnorandoError_DB = cantFilasRegistradasIgnorandoError_DB + 1
+					end if
+				end if 
+			NEXT
+
+
+			
+			if not huboErrores_TransaccionDB and seConfirmoLaAccion then
+					obj.controles(nombreControl_DeshacerCambios).Visible	= true
+					obj.controles(nombreControl_DeshacerCambios).Habilitado	= true
+					obj.controles(nombreControl_DeshacerCambios).setFoco 
+					obj.controles(nombre_btnGuardarEnBD).Visible	= false
+					obj.controles(nombre_btnGuardarEnBD).Habilitado	= false
+
+					mensaje = "Los datos cargados en la grilla fueron registrados en Buxis con éxito" & vbNewLine
+					''mensaje = mensaje & vbNewLine & "CantTotal: " & cantFilasGrilla
+					mensaje = mensaje & vbNewLine & "Cant. de filas Registradas: 		" & cantFilasRegistradas_DB
+					if cantFilasRegistradasIgnorandoError_DB > 0 then
+						mensaje = mensaje & vbNewLine & "Cant. que ignoró la advertencia: 	" & cantFilasRegistradasIgnorandoError_DB
+					end if 
+
+
+					msg_onWindow		mensaje, msg_Info
+					msg_onFormControl	mensaje, msg_OK
+					''obj.Fichas(1).SetFoco ''ReporteVacacional
+				else
+					obj.controles(nombreControl_DeshacerCambios).Visible	= false
+					obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+
+					mensaje = "Ocurrió un error al registrar los cambios en la Base de Datos"
+					msg_onFormControl	mensaje, msg_Error
+			end if
+
+	END IF
+
+
+End Sub
+
+
+		private function dbInsert(i)
+				dbInsert = false
 				'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'
+					col_IgnorarError 		= obj.controles(nombreGrilla).ValorCelda("col_IgnorarError", i) 
+					col_EstadoImportacion 	= obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+					col_EstadoImportacion	= Cint(col_EstadoImportacion)
+					
+
+					if col_EstadoImportacion = is_ERROR_NoIgnorable then
+						dbInsert = false
+						exit function
+					end if 
+
+
+					if col_EstadoImportacion = is_ADVERTENCIA_Ignorable then
+						if getBooleanValue(col_IgnorarError) = false then
+							dbInsert = false
+							exit function
+						end if 
+
+						else 
+							if col_EstadoImportacion <> is_OK_Aprobado then
+								exit function
+							end if
+					end if 
+
+					
 				'1) Se recuperan los valores correspondientes a cada columna'
 					col_COD_MF		= obj.controles(nombreGrilla).ValorCelda("col_COD_MF", i)		
 					col_PERIODO		= obj.controles(nombreGrilla).ValorCelda("col_PERIODO", i)		
@@ -1650,46 +1974,139 @@ public sub  btnDB_GuardarEnBD_ACTION
 					''''msg_onWindow sql, msg_Input 
 					obj.conexion.execute(sql)
 
+
 					
 					''huboErrores_TransaccionDB = true
 				'5) Se informan los resultados de la transacción'
-				msgObservacion = "OK: Guardado en BBDD Buxis con éxito"
-				obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
-			NEXT
+				if col_EstadoImportacion = is_ADVERTENCIA_Ignorable then
+					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB_Adv
+					else
+					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB
+				end if
+				obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = "• " & obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i)
+				pintarFila i+1, msg_DB_Update
+				''msgObservacion = "OK: Guardado en BBDD Buxis con éxito"
+				''obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
 
 
-			
-			if not huboErrores_TransaccionDB and seConfirmoLaAccion then
-					obj.controles(nombreControl_DeshacerCambios).Visible	= true
-					obj.controles(nombreControl_DeshacerCambios).Habilitado	= true
-					obj.controles(nombre_btnGuardarEnBD).Visible	= false
-					obj.controles(nombre_btnGuardarEnBD).Habilitado	= false
+				dbInsert = true
+		end function 
+	
 
-					mensaje = "Los datos cargados en la grilla fueron registrados en Buxis con éxito"
-					msg_onFormControl	mensaje, msg_OK
-				else
-					obj.controles(nombreControl_DeshacerCambios).Visible	= false
-					obj.controles(nombreControl_DeshacerCambios).Habilitado	= false
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
+''**********************************************************************************************************************************************************************************************************''
 
-					mensaje = "Ocurrió un error al registrar los cambios en la Base de Datos"
-					msg_onFormControl	mensaje, msg_Error
-			end if
+public Sub  btnDB_DeshacerCambiosGrilla_ACTION_IgnorarAdvertencias
+	
+	''nombreGrilla 	= "grdPreviExcel_Vacaciones"
+	const formatoFechaDB = "DD/MM/YYYY"
+	huboErrores_TransaccionDB = false
+	cantFilasGrilla = obj.controles(nombreGrilla).filas
+	cantFilasAfectadas_DB = 0
 
-	END IF
+	FOR i=0 TO (cantFilasGrilla - 1)
+			seGuardoEnDB = dbUpdate(i)
+			if seGuardoEnDB then 
+				cantFilasAfectadas_DB = cantFilasAfectadas_DB + 1
+				''resume next
+			end if 
+	NEXT
 
+	'5) Se informan los resultados de la transacción (general)'
+	''mensaje = " de " & cantFilasGrilla " filas"
+	''''nombreControl_DeshacerCambios = "btnDB_DeshacerCambiosGrilla"
 
+	if not huboErrores_TransaccionDB then
+			obj.controles(nombreControl_DeshacerCambios).habilitado	= false
+			obj.controles(nombreControl_DeshacerCambios).visible	= false
+			''obj.controles(nombre_btnGuardarEnBD).Visible	= true
+			''obj.controles(nombre_btnGuardarEnBD).Habilitado	= true
+			obj.controles(nombre_btnGuardarEnBD).Visible	= false
+			obj.controles(nombre_btnGuardarEnBD).Habilitado	= false
+
+			mensaje = "Los cambios fueron revertidos con éxito"
+			mensaje = mensaje & vbNewLine & "cantFilasActualizadas: " & cantFilasAfectadas_DB
+			mensaje = mensaje & vbNewLine & vbNewLine & "Si desea volver a importar los registros vuelva a importar el Excel"
+
+			msg_onWindow		mensaje, msg_Info
+			msg_onFormControl	mensaje, msg_Info
+		else
+			mensaje = "Ocurrieron errores al tratar de revertir los cambios"
+			msg_onFormControl	mensaje, msg_Error
+	end if
 End Sub
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
-''**********************************************************************************************************************************************************************************************************''
+
+
+	private function dbUpdate(i)
+			dbUpdate = false
+			'0) Se comienza con la lectura de cada fila de la grilla de previsualización (YA APROBADAS)'
+				col_EstadoImportacion 	= obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i)
+				col_EstadoImportacion	= Cint(col_EstadoImportacion)
+				if col_EstadoImportacion <> is_OK_RegistradoEnDB AND col_EstadoImportacion <> is_OK_RegistradoEnDB_Adv then
+					dbUpdate = false
+					exit function
+				end if 
+			'1) Se recuperan los valores correspondientes a cada columna'
+				col_COD_MF		= obj.controles(nombreGrilla).ValorCelda("col_COD_MF", i)		
+				col_PERIODO		= obj.controles(nombreGrilla).ValorCelda("col_PERIODO", i)		
+				col_COD_EMP		= obj.controles(nombreGrilla).ValorCelda("col_COD_EMP", i)		
+				col_FEC_INI		= obj.controles(nombreGrilla).ValorCelda("col_FEC_INI", i)		
+				col_FEC_FIN		= obj.controles(nombreGrilla).ValorCelda("col_FEC_FIN", i)		
+				col_CantDias	= obj.controles(nombreGrilla).ValorCelda("col_CantDias", i)			
+
+			'2) Se realizan las conversiones de fechas'
+				col_PERIODO		= Format(CStr(col_PERIODO)		, formatoFechaDB)
+				col_FEC_INI		= Format(CStr(col_FEC_INI)		, formatoFechaDB)
+				col_FEC_FIN		= Format(CStr(col_FEC_FIN)		, formatoFechaDB)
+
+				''
+				''if quedaronDiasTomadosEnNegativo(col_COD_MF, col_PERIODO) then 
+				''	mensaje = "Existen registros con días tomados en negativo. Se cancela operación. Revisar empleado: " & col_COD_MF & "- Periodo: " & col_PERIODO
+				''	msg_onWindow	mensaje, msg_Error
+				''	exit sub
+				''end if 
+
+			'3) Se prepara y ejecuta la transacción con la BBDD'
+				sqlDelete = "DELETE FROM CB_VAC_SOL "
+				sqlDelete = sqlDelete &_ 
+						" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+						" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+						" AND COD_EMP = " 			& col_COD_EMP &_
+						" AND FEC_INI = TO_DATE('" 	& col_FEC_INI & "', '"&formatoFechaDB&"')" 	&_
+						" AND LAST_HOST LIKE 'Cargado el%'"
+					''	" AND FEC_FIN = TO_DATE('" 	& col_FEC_FIN & "', '"&formatoFechaDB&"')" 	&_
+
+				''''msg_onWindow sqlDelete, msg_Input 
+				obj.conexion.execute(sqlDelete)
+
+
+				''Actualizar Saldo en CB_VAC
+				sql = 	" UPDATE CB_VAC  " &_ 
+				" SET DIAS_TOMADOS = (DIAS_TOMADOS - " & col_CantDias &")" &_ 
+				" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
+				" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	&_
+				" AND DIAS_TOMADOS > 0"
+				''''msg_onWindow sql, msg_Input 
+				cantFilas  = obj.conexion.execute(sql)
+				'''inputBox "", "cantFilas", cantFilas
+				''huboErrores_TransaccionDB = true
+			'4) Se informan los resultados de la transacción por fila'
+			msgObservacion = "OK: Se borró de la BBDD con éxito"
+			obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
+			pintarFila i+1, msg_DB_Update
+			obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_OK_RegistradoEnDB
+
+			dbUpdate = true
+	end function
 
 
 public Sub  btnDB_DeshacerCambiosGrilla_ACTION
@@ -1743,7 +2160,8 @@ public Sub  btnDB_DeshacerCambiosGrilla_ACTION
 			" WHERE COD_MF = '" 		& col_COD_MF  & "'" 	&_
 			" AND PERIODO = TO_DATE('" 	& col_PERIODO & "', '"&formatoFechaDB&"')" 	
 			''''msg_onWindow sql, msg_Input 
-			obj.conexion.execute(sql)
+			cantFilas  = obj.conexion.execute(sql)
+			'''inputBox "", "cantFilas", cantFilas
 			''huboErrores_TransaccionDB = true
 		'4) Se informan los resultados de la transacción por fila'
 		msgObservacion = "OK: Se borró de la BBDD con éxito"
