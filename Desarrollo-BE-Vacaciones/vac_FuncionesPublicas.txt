@@ -297,6 +297,7 @@ const is_OK_RegistradoEnDB_Adv	= 5
 		FOR i=0 TO (cantFilasGrilla - 1)
 			huboErroresValidacion = false
 			huboErroresValidacionAdvertencia = false
+			cantAdvertenciasPorFila = 0
 			'0) Obtiene las fechas de la grilla de previsualización'
 				col_COD_MF		= obj.controles(nombreGrilla).ValorCelda("col_COD_MF" , i)		
 				col_PERIODO		= obj.controles(nombreGrilla).ValorCelda("col_PERIODO", i)		
@@ -399,6 +400,7 @@ const is_OK_RegistradoEnDB_Adv	= 5
 					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
 					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
 					huboErroresValidacionAdvertencia = true
+					cantAdvertenciasPorFila = cantAdvertenciasPorFila + 1
 				end if 
 
 			'5) Realiza el cálculo de días que se están solicitando y descuenta el saldo disponible (No en la DB)'
@@ -406,11 +408,12 @@ const is_OK_RegistradoEnDB_Adv	= 5
 				cantDiferenciaDeMeses = DateDiff("m", getDateAsString, col_FEC_INI)
 				if cantDiferenciaDeMeses <> 0 and huboErroresValidacion=false then
 					if cantDiferenciaDeMeses > 0 then 
-						msgObservacion = "Atención: Se están solicitando vacaciones que no comienzan en el mes corriente de pago (Son anteriores o posteriores a futuro)"
-						msgObservacion = "Atención: Se están solicitando vacaciones que no corresponden al mes corriente de pago. " & cantDiferenciaDeMeses ''& col_FEC_INI
+						msgObservacion = "Atención: Se están solicitando vacaciones que no corresponden al mes corriente de pago (Son anteriores o posteriores a futuro)"
+						msgObservacion = "Atención: Se están solicitando vacaciones a futuro y no corresponden al mes corriente de pago. Cant. de meses posteriores: " & cantDiferenciaDeMeses ''& col_FEC_INI
 						obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
 						obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
 						huboErroresValidacionAdvertencia = true
+						cantAdvertenciasPorFila = cantAdvertenciasPorFila + 1
 					end if
 				end if
 
@@ -422,6 +425,7 @@ const is_OK_RegistradoEnDB_Adv	= 5
 						obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
 						obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
 						huboErroresValidacionAdvertencia = true
+						cantAdvertenciasPorFila = cantAdvertenciasPorFila + 1
 				end if
 
 				'5.2) Obtiene el saldo de la cant días disponibles para tomarse'
@@ -448,6 +452,7 @@ const is_OK_RegistradoEnDB_Adv	= 5
 					obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = msgObservacion
 					huboErroresValidacionAdvertencia = true
 					obj.controles(nombreGrilla).ValorCelda("col_EstadoImportacion", i) = is_ADVERTENCIA_Ignorable
+					cantAdvertenciasPorFila = cantAdvertenciasPorFila + 1
 				end if
 
 				
@@ -468,6 +473,11 @@ const is_OK_RegistradoEnDB_Adv	= 5
 							else
 								if cint(col_EstadoImportacion) = is_ADVERTENCIA_Ignorable then
 									pintarFila i+1, msg_Warn
+
+									if cantAdvertenciasPorFila > 1 then
+										msgObservacion = obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i)
+										obj.controles(nombreGrilla).ValorCelda("COL_OBSERVACIONES", i) = "*ADVERTENCIAS ENCONTRADAS*: " & cantAdvertenciasPorFila & "__"& msgObservacion
+									end if 
 								end if 
 						end if 
 						cantErroresEncontrados = cantErroresEncontrados + 1 
