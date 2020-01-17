@@ -926,6 +926,9 @@ const is_OK_RegistradoEnDB_Adv	= 5
 
 				msgSOEID = obj.controles(nombreGrilla).ValorCelda("col_SOEID", i)
 				objExcel.Worksheets(nroHojaExcel).Cells(nroFila, nroColumnaErrorExcel+1).Value = msgSOEID
+
+				msgNombreApellido = obj.controles(nombreGrilla).ValorCelda("col_NombreApellido", i)	
+				objExcel.Worksheets(nroHojaExcel).Cells(nroFila, nroColumnaErrorExcel+2).Value = msgNombreApellido
 			next
 
 		''objWorkbook.SaveAs nombreArchivo
